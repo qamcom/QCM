@@ -30,46 +30,44 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-classdef Material < handle
+classdef Material < matlab.mixin.Heterogeneous
     
-    properties
-        tag;      % Identifier string
-        shading;  % Include as shading.
-        color;    % Plot color
-        model;    % Material model
-        gain;     % Optional scattering loss offset
-    end
+   properties
+      Description char = 'Material'
+      shading  % Include as shading.
+   end
+   properties (Abstract, SetAccess = private)
+      Type
+      color    % Plot color
+   end
+   methods (Abstract)
+      y = SurfaceCoeff(m,freqs,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res);
+      y = CornerCoeff(m,freqs,corner,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res);
+   end
+   methods (Static, Sealed, Access = protected)
+      function defaultObject = getDefaultScalarElement
+         defaultObject = DefaultMaterial;
+      end
+   end
     
+   
     methods
         
-        % Constructor
-        function m=Material(tag,shading,gain)
-            if nargin
-            switch tag
-                case 'Scatterer', m.color = 4; m.model = '';m.gain=gain;
-                case 'Street',    m.color = 3; m.model = Street_Material;
-                case 'Wood',      m.color = 2; m.model = Wood_Material;
-                case 'CMU',       m.color = 1; m.model = CMU_Material;
-            end
-            m.tag     = tag;
-            m.shading = shading;
-            end 
-        end
-        
-        % Retransmit of surface
-        function y = SurfaceCoeff(m,freqs,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res)
-            if isempty(m.model)
-                y = 10^-(m.gain/20);
-            else
-                y = m.model.SurfaceCoeff(freqs,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res);
-            end
-        end
-        
-        % Retransmit of corner
-        function y = CornerCoeff(m,freqs,corner,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res)
-            y = m.model.CornerCoeff(freqs,corner,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res);
-        end
-        
+%         % Constructor
+%         function m=Material(tag,shading,gain)
+%             if nargin
+%             switch tag
+%                 case 'Scatterer', m.color = 4; m = ScatteringMaterial;
+%                 case 'Street',    m.color = 3; m = GenericMaterial();
+%                 case 'Wood',      m.color = 2; m = GenericMaterial();
+%                 case 'CMU',       m.color = 1; m = GenericMaterial();
+%             end
+%             m.tag     = tag;
+%             m.shading = shading;
+%             end 
+%         end
+%         
+      
     end
     
 end

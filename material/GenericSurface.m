@@ -96,4 +96,3 @@ geometryCoeff = resPn*10^(Offset/20);
 
 % Scattering independent of polarisation?
 y = penetrationCoeff.*(reflectionCoeff.*polarisationCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff);
-%y = penetrationCoeff.*(reflectionCoeff.*polarisationCoeff+scatteringCoeff);
