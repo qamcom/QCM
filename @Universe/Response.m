@@ -36,11 +36,10 @@ x = u.Channels(povs0,povs1,freqs,rain);
 clf;
 Hf=[]; tags={}; 
 for ii=1:x.N
-    tmp = x.link{ii};
-    Hf = tmp.Hf;
-    [nf,ne0,ne1,np0,np1]=size(Hf);
-    Hf(1:nf,1:ne0,1:ne1,1:np0,1:np1,ii)=Hf;
-    tags{end+1} = x.link{ii}.tag;
+    tmp = u.Channel(povs0{1},povs1{ii},freqs,rain);
+    [nf,ne0,ne1,np0,np1]=size(tmp.Hf);
+    Hf(1:nf,1:ne0,1:ne1,1:np0,1:np1,ii)=tmp.Hf;
+    tags{end+1} = tmp.tag;
 end
 Nf = size(Hf,1);
 Nfft = 4*2^ceil(log2(Nf));
@@ -59,8 +58,8 @@ Fbins = x.freqs;
 Tbins = (0:Nfft-1)/Nfft*Ts;
 Rbins = sys.c*Tbins;
 
-subplot(1,2,1); plot(Fbins/1e9, Pf); title('Frequency Response'); ylabel('dB'); xlabel('Frequency [GHz]'); grid on; legend(tags);
-subplot(1,2,2); plot(Rbins,     Pt); title('Temporal Response');   ylabel('dB'); xlabel('Distance [m]'); grid on; legend(tags);
+subplot(1,2,1); plot(Fbins/1e9, Pf,'LineWidth',2); title('Frequency Response'); ylabel('dB'); xlabel('Frequency [GHz]'); grid on; legend(tags);
+subplot(1,2,2); plot(Rbins,     Pt,'LineWidth',2); title('Temporal Response');   ylabel('dB'); xlabel('Distance [m]'); grid on; legend(tags);
 maxS = sys.maxRadius;%min(sys.maxRadius,Rbins(find(max(Pt,[],2)>max(Pt(:))-sys.raySelThreshold,1,'last')));
 axis([0 maxS*2 min(0,min(max(Pt))-sys.raySelThreshold-10) max(0,max(Pt(:)))]);
 

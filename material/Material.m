@@ -30,15 +30,16 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-classdef Material < matlab.mixin.Heterogeneous
+classdef Material < handle
+%classdef Material < matlab.mixin.Heterogeneous
     
    properties
-      Description char = 'Material'
-      shading  % Include as shading.
+      description = 'Material'
+      color   = 'b';
+      shading = 1 % Include as shading.
    end
    properties (Abstract, SetAccess = private)
-      Type
-      color    % Plot color
+      type
    end
    methods (Abstract)
       y = SurfaceCoeff(m,freqs,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res);
@@ -46,28 +47,8 @@ classdef Material < matlab.mixin.Heterogeneous
    end
    methods (Static, Sealed, Access = protected)
       function defaultObject = getDefaultScalarElement
-         defaultObject = DefaultMaterial;
+         defaultObject = GenericMaterial();
       end
    end
-    
-   
-    methods
-        
-%         % Constructor
-%         function m=Material(tag,shading,gain)
-%             if nargin
-%             switch tag
-%                 case 'Scatterer', m.color = 4; m = ScatteringMaterial;
-%                 case 'Street',    m.color = 3; m = GenericMaterial();
-%                 case 'Wood',      m.color = 2; m = GenericMaterial();
-%                 case 'CMU',       m.color = 1; m = GenericMaterial();
-%             end
-%             m.tag     = tag;
-%             m.shading = shading;
-%             end 
-%         end
-%         
-      
-    end
-    
+       
 end

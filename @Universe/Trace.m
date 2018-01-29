@@ -31,12 +31,11 @@ Bc = 1/D; % Coherence bandwith https://en.wikipedia.org/wiki/Coherence_bandwidth
   
 % Calculate channel grid with a number of samples around center.
 freqs = mean(freqs)+(-10:10)*Bc;
-x = u.Channels({pov0},{pov1},freqs,rain);
+y = u.Channel(pov0,pov1,freqs,rain);
 
 % Link
 colormap('jet');
 cc=colormap;
-y = x.link{1};
 
 % Endpoints
 povs{1} = y.pov0;
@@ -94,7 +93,7 @@ for nn0=1:NN0
             inds0 = y.nlos{nn0,nn1}.ind;
             P     = 20*log10(rms(y.nlos{nn0,nn1}.coeff(:,:),2));
             sel   = y.nlos{nn0,nn1}.sel;
-            a0    = x.universe.GetAtoms(inds0);
+            a0    = u.GetAtoms(inds0);
             
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
             
@@ -113,8 +112,8 @@ for nn0=1:NN0
             inds1 = y.n2los{nn0,nn1}.ind1;
             P     = 20*log10(rms(y.n2los{nn0,nn1}.coeff(:,:),2));
             sel   = y.n2los{nn0,nn1}.sel;
-            a0    = x.universe.GetAtoms(inds0);
-            a1    = x.universe.GetAtoms(inds1);
+            a0    = u.GetAtoms(inds0);
+            a1    = u.GetAtoms(inds1);
             
             Pi = round((1+(P-Pmax)/sys.raySelThreshold)*length(cc));
             
@@ -134,8 +133,8 @@ for nn0=1:NN0
             inds1 = y.n3los{nn0,nn1}.ind1;
             P     = 20*log10(rms(y.n3los{nn0,nn1}.coeff(:,:),2));
             sel   = y.n3los{nn0,nn1}.sel;
-            a0    = x.universe.GetAtoms(inds0);
-            a1    = x.universe.GetAtoms(inds1);
+            a0    = u.GetAtoms(inds0);
+            a1    = u.GetAtoms(inds1);
             
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
             
@@ -152,7 +151,7 @@ for nn0=1:NN0
 end
 %--------------------------------------------------------------------------
 
-x.universe.Plot(povs,[],[1 1 1]*0.2,[pmin;pmax]);
+u.Plot(povs,[],[1 1 1]*0.2,[pmin;pmax]);
 hold on;
 
 for nn0=1:NN0
@@ -180,7 +179,7 @@ for nn0=1:NN0
             inds0 = y.nlos{nn0,nn1}.ind;
             P     = 20*log10(rms(y.nlos{nn0,nn1}.coeff(:,:),2));
             sel   = y.nlos{nn0,nn1}.sel;
-            a0    = x.universe.GetAtoms(inds0);
+            a0    = u.GetAtoms(inds0);
             
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
             
@@ -211,8 +210,8 @@ for nn0=1:NN0
             inds1 = y.n2los{nn0,nn1}.ind1;
             P     = 20*log10(rms(y.n2los{nn0,nn1}.coeff(:,:),2));
             sel   = y.n2los{nn0,nn1}.sel;
-            a0    = x.universe.GetAtoms(inds0);
-            a1    = x.universe.GetAtoms(inds1);
+            a0    = u.GetAtoms(inds0);
+            a1    = u.GetAtoms(inds1);
             
             Pi = round((1+(P-Pmax)/sys.raySelThreshold)*length(cc));
             
@@ -248,8 +247,8 @@ for nn0=1:NN0
             inds1 = y.n3los{nn0,nn1}.ind1;
             P     = 20*log10(rms(y.n3los{nn0,nn1}.coeff(:,:),2));
             sel   = y.n3los{nn0,nn1}.sel;
-            a0    = x.universe.GetAtoms(inds0);
-            a1    = x.universe.GetAtoms(inds1);
+            a0    = u.GetAtoms(inds0);
+            a1    = u.GetAtoms(inds1);
             
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
             
@@ -276,3 +275,4 @@ a=colorbar;
 Ticks = linspace(a.Limits(1),a.Limits(2),Ns+1);
 colorbar('Ticks',Ticks,'TickLabels',Labels);
 axis equal
+title(sprintf('Significant rays of link "%s" in universe "%s"',y.tag,u.tag))
