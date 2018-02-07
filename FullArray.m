@@ -6,7 +6,7 @@ Ns        = 1;
 spacingV  = 0.75;
 spacingH  = 0.75;
 pol       = pi/4;
-element   = Element('patch');
+element   = Element('isotropic');
 nbit      = inf;
 
 lambda    = sys.c/f0;

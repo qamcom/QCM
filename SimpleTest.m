@@ -48,11 +48,11 @@ resHouse  = 5;  % House tile size
 resGround = 5; % Ground tile size
 
 % Materials
-matGround   = Material('Street',0); % Ground cannot cast shade.
-matWall     = Material('CMU',1);
-matRoof     = Material('Wood',1);
-matTrunk    = Material('Wood',0);
-matFoliage  = Material('Wood',1);
+matGround   = GenericMaterial('Street',0); % Ground cannot cast shade.
+matWall     = GenericMaterial('CMU',1);
+matRoof     = GenericMaterial('Wood',1);
+matTrunk    = GenericMaterial('Wood',0);
+matFoliage  = ScatteringMaterial('Foliage',-10);
 
 
 % -------------------------------------------------------------------------

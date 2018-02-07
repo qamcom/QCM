@@ -21,10 +21,12 @@
 function [y,meta]=LosCoeff(freqs,array0,array1,dp0,dp1,rotation0,rotation1,speed,radius,offAzimuth0,offElevation0,offAzimuth1,offElevation1,polDiff,LOS,rain,raySelThreshold,bb)
 
 % Phase center los coeff 
-tmp = bb.*array0.element.ElementCoeff(freqs,offAzimuth0,offElevation0).*...
-      array1.element.ElementCoeff(freqs,offAzimuth1,offElevation1).*...
-      DistanceCoeff(freqs,radius).*...
-      AtmosphereCoeff(freqs,radius,rain)*LOS;
+elemCoeff0      = array0.element.ElementCoeff(freqs,offAzimuth0,offElevation0);
+elemCoeff1      = array1.element.ElementCoeff(freqs,offAzimuth1,offElevation1);
+distanceCoeff   = DistanceCoeff(freqs,radius);
+atmosphereCoeff = AtmosphereCoeff(freqs,radius,rain);
+
+tmp = elemCoeff0.*elemCoeff1.*distanceCoeff.*atmosphereCoeff*LOS;
   
 % First orthogonal polarisation mode
 tmp0   = tmp.*cos(polDiff);
@@ -70,4 +72,9 @@ meta.ant0EoA = offElevation0/pi*180;
 meta.ant1AoA = offAzimuth1/pi*180;
 meta.ant1EoA = offElevation1/pi*180;
 meta.P       = 20*log10(rms(y(:)));
+meta.elemCoeff0      = 20*log10(rms(elemCoeff0(:)));
+meta.elemCoeff1      = 20*log10(rms(elemCoeff1(:)));
+meta.distanceCoeff   = 20*log10(rms(distanceCoeff(:)));
+meta.atmosphereCoeff = 20*log10(rms(atmosphereCoeff(:)));
+
 

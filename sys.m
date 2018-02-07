@@ -40,7 +40,7 @@ classdef sys
       quickTrace            = 1;   % Somewhat faster ray tracing, some infrequent mistakes possible
       bubbleTrace           = 1;   % Use shading spheres (bubbles) for faster ray tracing
       forceNoScattering     = 0;
-      forceNoDiffraction    = 0;
+      forceNoDiffraction    = 1;
       forceNoReflection     = 0;
       forceNoCorners        = 0;
       forceNoPenetration    = 1;

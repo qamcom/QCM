@@ -1,16 +1,4 @@
-% Class to represent a material
-% Model selected when defined.
-%
-% Constructor
-% m=Material(tag,shading)
-% tag:  label refer to availbale material models. Eg 'CMU', 'Street', 'Wall' etc
-% shading: If zero thsi matrial will be excluded when finfing atoms in shade (in ray tracing)
-%
-% Methods
-% y = m.SurfaceCoeff(freqs,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res)
-% y = m.CornerCoeff(freqs,corner,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res)
-%
-%
+% Class to represent a material pointer/handle
 % -------------------------------------------------------------------------
 %     This is a part of the Qamcom Channel Model (QCM)
 %     Copyright (C) 2017  Björn Sihlbom, QAMCOM Research & Technology AB
@@ -30,17 +18,15 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-classdef Material < HetHandle
-    
-    properties (Abstract, SetAccess = private)
-        tag
-        color
-        shading
-    end
-       
-    methods (Abstract)
-        y = SurfaceCoeff(m,freqs,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res);
-        y = CornerCoeff(m,freqs,corner,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res);
+classdef Materials < handle
+    properties
+        x;
     end
     
+    methods
+        function m = Materials(x)
+            m.x =x;
+        end
+    end
 end
+ 

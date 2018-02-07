@@ -100,9 +100,9 @@ classdef PointOfView
             cn=2;
 
             [pov,dov,nov] = x.xyz;
-            plot3(pov(1),pov(2),pov(3),'k*'), hold on;
-            plot3([pov(1) pov(1)+2*cp*dov(1)],[pov(2) pov(2)+2*cp*dov(2)],[pov(3) pov(3)+2*cp*dov(3)],'k')
-            plot3([pov(1) pov(1)+2*cn*nov(1)],[pov(2) pov(2)+2*cn*nov(2)],[pov(3) pov(3)+2*cn*nov(3)],'k:')
+            plot3(pov(1),pov(2),pov(3),'k*','MarkerSize',4), hold on;
+            plot3([pov(1) pov(1)+2*cp*dov(1)],[pov(2) pov(2)+2*cp*dov(2)],[pov(3) pov(3)+2*cp*dov(3)],'k','LineWidth',4)
+            plot3([pov(1) pov(1)+2*cn*nov(1)],[pov(2) pov(2)+2*cn*nov(2)],[pov(3) pov(3)+2*cn*nov(3)],'k:','LineWidth',4)
             text(pov(1),pov(2),pov(3),x.tag,'Color','black','FontSize',10,'HorizontalAlignment','center','Units','data' );
 
             for index=1:x.agroup.n

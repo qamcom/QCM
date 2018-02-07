@@ -49,7 +49,7 @@ arrayGroup = ArrayGroup('Horn11',{array},[0 0 0],0,0,0,dualpol);
 
 
 % Materials
-matGround = Material('CMU',0);
+matGround = GenericMaterial('CMU',1);
 
 rain  = 0; % mm/h
 

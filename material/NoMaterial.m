@@ -1,10 +1,8 @@
-% Class to represent a material
-% Model selected when defined.
+% Class to represent a generic material
 %
 % Constructor
-% m=Material(tag,shading)
-% tag:  label refer to availbale material models. Eg 'CMU', 'Street', 'Wall' etc
-% shading: If zero thsi matrial will be excluded when finfing atoms in shade (in ray tracing)
+% m = GenericMaterial(tag)
+% tag:  label refer to available generic material model configs. Eg 'CMU', 'Street', 'Wall' etc
 %
 % Methods
 % y = m.SurfaceCoeff(freqs,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res)
@@ -30,17 +28,25 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-classdef Material < HetHandle
+classdef NoMaterial < Material
     
-    properties (Abstract, SetAccess = private)
-        tag
-        color
-        shading
-    end
-       
-    methods (Abstract)
-        y = SurfaceCoeff(m,freqs,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res);
-        y = CornerCoeff(m,freqs,corner,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res);
+    
+    % Abstract in parent class
+    properties (SetAccess = private)
+        tag     = 'Null';
+        color   = nan;
+        shading = nan;
     end
     
+    methods
+        
+        
+        function y=SurfaceCoeff(m,freqs,r0,r1,e0,e1,a0,a1,p0,p1,res)
+            y = nan;            
+        end
+        
+        function y=CornerCoeff(m,freqs,c,r0,r1,e0,e1,a0,a1,p0,p1,res)
+            y = nan;
+        end
+    end
 end

@@ -29,9 +29,12 @@ resGround = 10; % Ground tile size
 
 
 %--------------------------------------------------------------------------
-matGround   = Material('Street',0); % Ground cannot cast shade.
-matWall     = Material('CMU',1);
-matRoof     = Material('CMU',1);
+% Materials
+matGround   = GenericMaterial('Street',0); % Ground cannot cast shade.
+matWall     = GenericMaterial('CMU',1);
+matRoof     = GenericMaterial('Wood',1);
+matTrunk    = GenericMaterial('Wood',0);
+matFoliage  = ScatteringMaterial('Foliage',-10);
 
 
 % Start a universe, add ground tiles
@@ -42,7 +45,7 @@ u.AddAtoms('Ground',ground);
 
 % Add buildings
 for n=1:size(B,1)
-
+    
     corners = [0 0; 0 B(n,5)-B(n,2); B(n,4)-B(n,1) B(n,5)-B(n,2); B(n,4)-B(n,1) 0];
     corners(:,1) = corners(:,1)-corners(1,1);
     corners(:,2) = corners(:,2)-corners(1,2);
@@ -69,8 +72,8 @@ for n=1:size(B,1)
     % pos (optional) is a 3D ccordinate for translating structure into Universe
     % rot (optional) is a azimuth rotation angle ro rotate structure into Universe
     u.AddAtoms(sprintf('Building%d',n),bb,bpos,0);
-
-
+    
+    
 end
 
 x0=cell(0);
@@ -82,7 +85,7 @@ switch scenario
         
         pol      = pi/4;     % Polarisation (Radians Vs Normal-of-view vector)
         dualpol  = 1;     % 1 == Also analyze perpendicular polarisation mode
-        ueElement  = Element('omni');
+        ueElement  = Element('isotropic');
         ueAnt      = Array('UE',[0 0],ueElement,pol);
         ueAntsys   = ArrayGroup('UE',{ueAnt ueAnt},[0 0 0;0 1 0],[0 0],[0 0],[0 0],dualpol);
         
@@ -113,22 +116,22 @@ switch scenario
         end
         inds = 1:length(x0);
         UNdPos = (inds'-1)*dd;
-
+        
         % Define BTS positions
         la = [120  340 51];
         btsAntsys = DistArray(mean(freq),30); % QuadArray(mean(freq),30);
         
         bb=[];%zeros(1,numel(freq)); bb(round(numel(freq)/2))=1;
-
+        
     case 2
         freq = 3.5e9;
         
         pol      = pi/4;     % Polarisation (Radians Vs Normal-of-view vector)
         dualpol  = 0;     % 1 == Also analyze perpendicular polarisation mode
-        ueElement  = Element('omni');
+        ueElement  = Element('isotropic');
         ueAnt      = Array('UE',[0 0],ueElement,pol);
         ueAntsys   = ArrayGroup('UE',{ueAnt},[0 0 0],[0],[0],[0],dualpol);
-
+        
         % Define UE positions
         nUNd = 1000;
         UNdPos = [linspace(9,387,nUNd).' 276*ones(nUNd,1) 10*ones(nUNd,1)];
@@ -143,7 +146,7 @@ switch scenario
         % Define BTS positions
         la = [140  200 10];
         btsAntsys = ueAntsys;
-
+        
         bb = [];
     otherwise
 end
@@ -151,7 +154,7 @@ end
 
 % PointOfView(tag,position,elevation,azimuth,agroup)
 x1{1} = PointOfView('BTS',btsAntsys,la,0,0);
-figure(3); 
+figure(3);
 u.Plot(x0,x1);
 axis equal;
 pause(0.1)
@@ -163,17 +166,21 @@ u.PlotLOS(x0{1}.position,x1{1}.position);
 
 rain  = 0; % mm/h
 
-itmode =1;
+itmode =0;
 tic
 if itmode==0
     
     % Batch calculation
-    channelResponse = u.Channels(freq,rain,x0,x1,bb);
+    channelResponse = u.Channels(x0,x1,freq,rain,bb);
     
     N0 = channelResponse.link{1}.pov0.agroup.n;
     N1 = channelResponse.link{1}.pov1.agroup.n;
     P  = nan(numel(inds),1);
     PP = nan(numel(inds),4,N0,N1);
+    PPe0 = nan(numel(inds),1);
+    PPe1 = nan(numel(inds),1);
+    PPd = nan(numel(inds),1);
+    PPa = nan(numel(inds),1);
     
     for n=1:numel(inds)
         ind = inds(n);
@@ -182,6 +189,11 @@ if itmode==0
             for n1=1:N1
                 PP(n,1,n0,n1) = channelResponse.link{n}.los{n0,n1}.P;
                 PP(n,2,n0,n1) = channelResponse.link{n}.nlos{n0,n1}.P;
+                PPe0(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff0;
+                PPe1(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff1;
+                PPd(n,1,n0,n1)  = link.nlos{n0,n1}.distanceCoeff;
+                PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
+
                 PP(n,3,n0,n1) = channelResponse.link{n}.n2los{n0,n1}.P;
                 PP(n,4,n0,n1) = channelResponse.link{n}.n3los{n0,n1}.P;
             end
@@ -192,7 +204,11 @@ else
     
     
     P  = nan(numel(inds),1);
-    PP = nan(numel(inds),4);
+    PP = nan(numel(inds),5);
+    PPe0 = nan(numel(inds),1);
+    PPe1 = nan(numel(inds),1);
+    PPd = nan(numel(inds),1);
+    PPa = nan(numel(inds),1);
     
     for n=1:numel(inds)
         n
@@ -206,16 +222,23 @@ else
         for n0=1:N0
             for n1=1:N1
                 PP(n,1,n0,n1) = link.los{n0,n1}.P;
+                
                 PP(n,2,n0,n1) = link.nlos{n0,n1}.P;
+                PPe0(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff0;
+                PPe1(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff1;
+                PPd(n,1,n0,n1)  = link.nlos{n0,n1}.distanceCoeff;
+                PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
+                
                 PP(n,3,n0,n1) = link.n2los{n0,n1}.P;
                 PP(n,4,n0,n1) = link.n3los{n0,n1}.P;
+                PP(n,5,n0,n1) = link.n3los{n0,n1}.P;
             end
         end
         
         P(n) = link.P;
+        
+    end
     
-     end
-     
 end
 toc
 
@@ -231,19 +254,25 @@ plot(UNdPos(inds,1),squeeze(PP(:,1,:)),'b');
 plot(UNdPos(inds,1),squeeze(PP(:,2,:)),'r');
 plot(UNdPos(inds,1),squeeze(PP(:,3,:)),'y');
 plot(UNdPos(inds,1),squeeze(PP(:,4,:)),'m');
+plot(UNdPos(inds,1),squeeze(PPe0(:,1,:)),'k');
+plot(UNdPos(inds,1),squeeze(PPe1(:,1,:)),'k');
+plot(UNdPos(inds,1),squeeze(PPd(:,1,:)),'k');
+plot(UNdPos(inds,1),squeeze(PPa(:,1,:)),'k');
 xlabel('UNdPos [m]');
 ylabel('RMS Path Loss incl antennas [dB]');
 grid on;
 
 % Visualize
-for n=1:numel(inds)
-    n
-    ind = inds(n);
+
+if 0%scenario==1
+    for n=1:numel(inds)
+        ind = inds(n);
+        figure
+        u.Trace(x0{n},x1{1},freq,rain);
+    end
     figure
-    u.Trace(x0{n},x1{1},freq,rain);
+    u.Response(x1,x0,freq,rain);
 end
-figure
-u.Response(x0,x1,freq,rain);
 
 
 

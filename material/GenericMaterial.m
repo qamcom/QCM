@@ -1,12 +1,12 @@
- % Class to represent a generic material
+% Class to represent a generic material
 %
 % Constructor
 % m = GenericMaterial(tag)
 % tag:  label refer to available generic material model configs. Eg 'CMU', 'Street', 'Wall' etc
 %
 % Methods
-% y = m.SurfaceCoeff(freqs,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res)
-% y = m.CornerCoeff(freqs,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,radius0,radius1,res)
+% y = m.SurfaceCoeff(freqs,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res)
+% y = m.CornerCoeff(freqs,corner,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,pol0,pol1,res)
 %
 %
 % -------------------------------------------------------------------------
@@ -31,7 +31,6 @@
 classdef GenericMaterial < Material
     
     properties
-        tag                 = 'CMU';
         freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
         
         % Values below vectors of same size as freqs
@@ -41,67 +40,69 @@ classdef GenericMaterial < Material
         reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
         diffractionLoss     = 40; % dB
         diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+        
     end
     
+    % Abstract in parent class
     properties (SetAccess = private)
-        type                = '';
+        tag     = 'Default';
+        color   = '1';
+        shading = 1;
     end
     
     methods
         
-        %         % Constructor
-        function m=GenericMaterial(tag)
+        % Constructor
+        function m=GenericMaterial(tag,shading)
             if nargin
+                m.tag     = tag;
+                m.shading = shading;
                 switch tag
                     case 'Street',
                         m.color             = 3;
-                        tag                 = 'Street';
-                        freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
+                        m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
                         
                         % Values below vectors of same size as freqs
-                        penetrationLoss     = 30; % dB
-                        scatteringLoss      = 50; % dB
-                        reflectionLoss      = 3;  % dB
-                        reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-                        diffractionLoss     = 40; % dB
-                        diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.penetrationLoss     = 30; % dB
+                        m.scatteringLoss      = 50; % dB
+                        m.reflectionLoss      = 3;  % dB
+                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.diffractionLoss     = 40; % dB
+                        m.diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
                         
                     case 'Wood',
                         m.color             = 2;
-                        tag                 = 'CMU';
-                        freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
+                        m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
                         
                         % Values below vectors of same size as freqs
-                        penetrationLoss     = 30; % dB
-                        scatteringLoss      = 50; % dB
-                        reflectionLoss      = 3;  % dB
-                        reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-                        diffractionLoss     = 40; % dB
-                        diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.penetrationLoss     = 30; % dB
+                        m.scatteringLoss      = 50; % dB
+                        m.reflectionLoss      = 3;  % dB
+                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.diffractionLoss     = 40; % dB
+                        m.diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
                         
-                    otherwise, %'CMU',
+                    case 'CMU',
                         m.color             = 1;
-                        tag                 = 'CMU';
-                        freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
+                        m.tag               = 'CMU';
+                        m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
                         
                         % Values below vectors of same size as freqs
-                        penetrationLoss     = 30; % dB
-                        scatteringLoss      = 50; % dB
-                        reflectionLoss      = 3;  % dB
-                        reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-                        diffractionLoss     = 40; % dB
-                        diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.penetrationLoss     = 30; % dB
+                        m.scatteringLoss      = 50; % dB
+                        m.reflectionLoss      = 3;  % dB
+                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.diffractionLoss     = 40; % dB
+                        m.diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        
+                    otherwise,
+                        error('Not supported.')
                         
                 end
-                m.tag     = tag;
-                m.shading = shading;
             end
         end
         
-
-        
-               
-       
+        % Abstract in parent class
         % Reflection, Penetration and Scattring coeff of a surface
         %
         % y=SurfaceCoeff(freqs,r0,r1,e0,e1,a0,a1,p0,p1,res)
@@ -114,26 +115,31 @@ classdef GenericMaterial < Material
         %
         % y:        Ray (amplitude) coeff. Matrix y(ray-index,freq-index)
         %
-        function y=SurfaceCoeff(freqs,r0,r1,e0,e1,a0,a1,p0,p1,res)
+        function y=SurfaceCoeff(m,freqs,r0,r1,e0,e1,a0,a1,p0,p1,res)
             
             % get from properties: pLoss,sLoss,rLoss,rExp
             % pLoss:    Penetration loss [dB]
             % sLoss:    Scattering loss floor [dB]
             % rLoss:    Reflection loss min [dB]
             % rExp:     Reflection strength drop off
-            [~,fbin]=min(abs(repmat(m.freqs(:),1,numel(freqs))-repmat(freqs,numel(m.freqs,1))));
+            if numel(m.freqs)<=1,
+                fbin = ones(size(freqs));
+            else
+                [~,fbin]=min(abs(repmat(m.freqs(:),1,numel(freqs))-repmat(freqs,numel(m.freqs,1))));
+            end
             pLoss = m.penetrationLoss(fbin);
             sLoss = m.scatteringLoss(fbin);
             rLoss = m.reflectionLoss(fbin);
-            rExp  = m.reflectionExp(fbin);
+            rExp  = m.reflectionExponent(fbin);
             
             
             
+            Nr = numel(r0);
             Nf = numel(freqs);
             
             % Penetration (only with paths on different sides of atom surface)
             penetrationRequired = xor(e0>pi/2,e1>pi/2);
-            penetrationCoeff    = 10.^(repmat(penetrationRequired,1,Nf).*(-pLoss)/20);
+            penetrationCoeff    = 10.^(repmat(penetrationRequired,1,Nf).*repmat(-pLoss/20,Nr,1));
             
             if sys.forceNoPenetration
                 penetrationCoeff(penetrationRequired,:)=0;
@@ -171,14 +177,14 @@ classdef GenericMaterial < Material
                 reflectionCoeff = 0;
             else
                 %reflectionCoeff = repmat((max(0,cos(D(:))).^rExp),1,Nf).*10.^(-rLoss/20);
-                reflectionCoeff = repmat(D(:)==0,1,Nf).*10.^(-rLoss/20);
+                reflectionCoeff = repmat(D(:)==0,1,Nf).*repmat(10.^(-rLoss/20),Nr,1);
             end
             
             % Scattering.
             if sys.forceNoScattering
                 scatteringCoeff = 0;
             else
-                scatteringCoeff = 10.^(-sLoss/20);
+                scatteringCoeff = repmat(10.^(-sLoss/20),Nr,1);
             end
             
             
@@ -192,9 +198,10 @@ classdef GenericMaterial < Material
             
         end
         
+        % Abstract in parent class
         % Diffraction coeff around a corner
         %
-        % y=CornerCoeff(freqs,r0,r1,e0,e1,a0,a1,p0,p1,res)
+        % y=CornerCoeff(freqs,c,r0,r1,e0,e1,a0,a1,p0,p1,res)
         % freqs:    Frequency vector [Hz]
         % r0,r1:    Ray distance to source [m]
         % e0,e1:    Elevation "phase center" vs "ray source"
@@ -203,16 +210,21 @@ classdef GenericMaterial < Material
         % res:      Atom size [m]
         %
         % y:        Ray (amplitude) coeff. Matrix y(ray-index,freq-index)
-        function y=CornerCoeff(freqs,c,r0,r1,e0,e1,a0,a1,p0,p1,res)
+        function y=CornerCoeff(m,freqs,c,r0,r1,e0,e1,a0,a1,p0,p1,res)
             
             % get from properties: dLoss,dExp
             % dLoss:    Diffraction loss max [dB]
             % rExp:     Diffraction strength drop off
-            [~,fbin]=min(abs(repmat(m.freqs(:),1,numel(freqs))-repmat(freqs,numel(m.freqs,1))));
+            if numel(m.freqs)<=1,
+                fbin = ones(size(freqs));
+            else
+                [~,fbin]=min(abs(repmat(m.freqs(:),1,numel(freqs))-repmat(freqs,numel(m.freqs,1))));
+            end
             dLoss = m.diffractionLoss(fbin);
-            rExp  = m.diffractionExp(fbin);
-
+            dExp  = m.diffractionExponent(fbin);
+            
             Nf = numel(freqs);
+            Nr = numel(c);
             
             penetrationCoeff = ~or(e0>(pi+c)/2,e1>(pi+c)/2);
             
@@ -221,7 +233,7 @@ classdef GenericMaterial < Material
             % Power proportional to projected atom corner length. Coeff for amplitude
             areaCoeff = sqrt(res.*sqrt(abs(cos(e0).*cos(e1)))); % 1D
             
-            % Reflection adjusted for diff from perfect(no) diffraction.
+            % Adjustment for diff from perfect(no) diffraction.
             % Projected atom area
             resP = res.*sqrt(abs(cos(e0).*cos(e1)));
             
@@ -248,7 +260,7 @@ classdef GenericMaterial < Material
             D = AngleDiff(CD,C1);
             
             % Source: fig 6 in http://www.interdigital.com/research_papers/2014_02_18_60ghz_officebuilding_charac
-            diffractCoeff = repmat((max(0,cos(D(:))).^dExp),1,Nf).*10.^(-dLoss/20);
+            diffractCoeff = repmat((max(0,cos(D(:)))),1,Nf).^repmat(dExp.*10.^(-dLoss/20),Nr,1);
             
             % Total diffracted signal...
             y = repmat(penetrationCoeff.*areaCoeff,1,Nf).*diffractCoeff;

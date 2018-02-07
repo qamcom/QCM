@@ -2,18 +2,18 @@
 % -------------------------------------------------------------------------
 %     This is a part of the Qamcom Channel Model (QCM)
 %     Copyright (C) 2017  Björn Sihlbom, QAMCOM Research & Technology AB
-%     mailto:bjorn.sihlbom@qamcom.se, http://www.qamcom.se, https://github.com/qamcom/QCM 
-% 
+%     mailto:bjorn.sihlbom@qamcom.se, http://www.qamcom.se, https://github.com/qamcom/QCM
+%
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
 %     the Free Software Foundation, either version 3 of the License, or
 %     (at your option) any later version.
-% 
+%
 %     This program is distributed in the hope that it will be useful,
 %     but WITHOUT ANY WARRANTY; without even the implied warranty of
 %     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 %     GNU General Public License for more details.
-% 
+%
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
@@ -33,7 +33,7 @@ elemCoeff1       = array1.element.ElementCoeff(freqs,offAzimuth1,offElevation1);
 distanceCoeff    = DistanceCoeff(freqs,radius0+radius1);
 atmosphereCoeff  = AtmosphereCoeff(freqs,radius0+radius01+radius1,rain);
 
-stochasticCoeff  = StochasticCoeff(freqs,radius01,h0,h1,scenario); 
+stochasticCoeff  = StochasticCoeff(freqs,radius01,h0,h1,scenario);
 
 % Phase center n3los coeff is a superposition of all nlos rays
 tmp0 = repmat(bb,Nr,1).*elemCoeff0.*distanceCoeff.*stochasticCoeff.*elemCoeff1.*atmosphereCoeff;
@@ -126,6 +126,10 @@ if ~isempty(ind)
     meta.ant0EoA     = offElevation0(ind)/pi*180;
     meta.ant1AoA     = offAzimuth1(ind)/pi*180;
     meta.ant1EoA     = offElevation1(ind)/pi*180;
-    meta.P           = 20*log10(rms(y(:)));
+    meta.elemCoeff0      = 20*log10(rms(elemCoeff0(:)));
+    meta.elemCoeff1      = 20*log10(rms(elemCoeff1(:)));
+    meta.distanceCoeff   = 20*log10(rms(distanceCoeff(:)));
+    meta.atmosphereCoeff = 20*log10(rms(distanceCoeff(:)));
+    meta.stochasticCoeff = rms(stochasticCoeff(:));
 end
 

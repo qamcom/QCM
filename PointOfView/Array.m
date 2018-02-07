@@ -158,9 +158,9 @@ classdef Array
             cp=1;
             cn=1;
 
-            plot3(pov(1),pov(2),pov(3),'r*'), hold on;
-            plot3([pov(1) pov(1)+cp*dov(1)],[pov(2) pov(2)+cp*dov(2)],[pov(3) pov(3)+cp*dov(3)],'r')
-            plot3([pov(1) pov(1)+cn*nov(1)],[pov(2) pov(2)+cn*nov(2)],[pov(3) pov(3)+cn*nov(3)],'r:')
+            plot3(pov(1),pov(2),pov(3),'r*','MarkerSize',4), hold on;
+            plot3([pov(1) pov(1)+cp*dov(1)],[pov(2) pov(2)+cp*dov(2)],[pov(3) pov(3)+cp*dov(3)],'r','LineWidth',4)
+            plot3([pov(1) pov(1)+cn*nov(1)],[pov(2) pov(2)+cn*nov(2)],[pov(3) pov(3)+cn*nov(3)],'r:','LineWidth',4)
 
             elem = a.Elem(pov,dov,nov);
             plot3(elem(:,1),elem(:,2),elem(:,3),'r.'), hold on;

@@ -50,21 +50,20 @@ classdef Universe < handle
                 u.scenario  = 'hata-urban-smallcity';
             end
             
-            u.atoms.normal  = zeros(0,3);
+            u.atoms.normal   = zeros(0,3);
             u.atoms.surface  = zeros(0,3);
-            u.atoms.material = Material;
-            u.atoms.material(:) = [];
-            u.atoms.corner  = zeros(0,2);
-            u.atoms.res  = zeros(0,1);
+            u.atoms.corner   = zeros(0,2);
+            u.atoms.res      = zeros(0,1);
             
         end
         
-        % Clear LOS cache
+         % Clear LOS cache
         function ResetLOS(u)
             u.los   = [];
             u.los.N = 0;
         end
          
+       
         % Add atoms to universe
         AddAtoms(u,tag,x,pos,rot);
         
