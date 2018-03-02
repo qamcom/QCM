@@ -31,7 +31,7 @@ Bc = 1/D; % Coherence bandwith https://en.wikipedia.org/wiki/Coherence_bandwidth
   
 % Calculate channel grid with a number of samples around center.
 freqs = mean(freqs)+(-10:10)*Bc;
-y = u.Channel(pov0,pov1,freqs,rain);
+y = u.Channel(pov0,pov1,freqs,0,rain);
 
 % Link
 colormap('jet');
@@ -43,8 +43,8 @@ povs{2} = y.pov1;
 
 % Plot structures and endpoints
 
-NN0 = y.pov0.agroup.n;
-NN1 = y.pov1.agroup.n;
+NN0 = y.pov0.antsys.n;
+NN1 = y.pov1.antsys.n;
 
 
 Pmax = -inf;

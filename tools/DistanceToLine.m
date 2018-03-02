@@ -1,9 +1,12 @@
 % Find perpendicular distance to line
 %
-% [dd,xx] = DistanceToLine(x,p0,p1)
+% [d,t] = DistanceToLine(x,p0,p1)
 %
 % x0:       Points in 3D [x,y,z]
 % x1,x2:    Line definition (2 points)
+%
+% d:        Perpendicular distance to line
+% t:        Where on line. x0 = x1+t*(x2-x1)
 %
 % http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
 %

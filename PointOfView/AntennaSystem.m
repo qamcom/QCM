@@ -17,7 +17,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-classdef ArrayGroup
+classdef AntennaSystem
     
     properties (SetAccess = private)
         tag;        % Identifier string
@@ -35,7 +35,7 @@ classdef ArrayGroup
     
     methods
         
-        function x = ArrayGroup(tag,arrays,positions,elevations,azimuths,rotations,dualpol)
+        function x = AntennaSystem(tag,arrays,positions,elevations,azimuths,rotations,dualpol)
             x.tag        = tag;          
             x.n          = numel(arrays);    
             x.arrays     = arrays;

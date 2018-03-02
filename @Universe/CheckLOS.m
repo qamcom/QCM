@@ -68,9 +68,9 @@ if ~isempty(a.normal)
                 center  = a.surface(LOSbox,:)-a.normal(LOSbox,:);
                 res     = a.res(LOSbox,:);
                 [dd,xx] = DistanceToLine(center,POV0,POV1);
-                d = min(dd(xx>sys.largeScaleResolution/2)./res(xx>sys.largeScaleResolution/2))*2;
+                d = min(dd(xx>sys.largeScaleResolution/2)./res(xx>sys.largeScaleResolution/2));
                 
-                LOS(n0,n1)=isempty(d)||(d>=1);
+                LOS(n0,n1)=(isempty(d)||(d>=1));
             end
             
         end

@@ -19,20 +19,20 @@
 
 function SimpleTest
 
+fc = 3.5e9;
+
 rng(1); % Random seed
-addpath(genpath('QCM'));
-addpath(genpath('QCM'));
 
 % -------------------------------------------------------------------------
 % Setup
 
 % Freq bins
-freqs = 28e9+(-60:60)*150e3; % [Hz] One freq bin per per 150kHz
+freqs = fc+(-49.5:49.5)*15e3*12; % [Hz] One freq bin per per RB of 12*15kHz
 
 
 % Antenna array
-lambda = sys.c/60e9;
-Nv=2; Nh=12; spacingV=0.7; spacingH=0.7;
+lambda = sys.c/fc;
+Nv=8; Nh=16; spacingV=0.7; spacingH=0.7;
 
 % Universe size x (EW) & y (NS) [m]
 R = [110,110];   % Universe size
@@ -84,9 +84,15 @@ elempos   = [hp(:),vp(:)]*lambda; % Array config H,V
 element = Element('isotropic');
 
 % Define array
-array = Array('SimpleTest',elempos,element,pol);
 
-arrayGroup = ArrayGroup('SimpleTest',{array},[0 0 0],0,0,0,dualpol);
+arrayBS =  Array('SimpleTest',elempos,element,pol);
+antSysBS = AntennaSystem('SimpleTest',{arrayBS},[0 0 0],0,0,0,dualpol);
+
+arrayMS =  Array('SimpleTest',[0,0],element,pol);
+antSysMS = AntennaSystem('SimpleTest',{arrayMS},[0 0 0],0,0,0,dualpol);
+
+
+
 
 % Buildings
 n=0;
@@ -124,17 +130,22 @@ x1=cell(0);
 
 % x = PointOfView(tag,agroup,position,elevation,azimuth,velocity)
 
+BShardware  = GenericHardware;
+BSalgorithm = BasicBSAlgorithm;
+MShardware  = GenericHardware;
+UEalgorithm = BasicUEAlgorithm;
+
 pov  = [35,15,10]; n=0;
-x0{1} = PointOfView(sprintf('%dNE',n),arrayGroup,pov,0,dovNE);
+x0{1} = PointOfView(sprintf('BS-%dNE',n),antSysBS,pov,0,dovNE,[0 0 0],BSalgorithm,BShardware);
 
 pov  = [75,95,10]; n=n+1;
-x1{n} = PointOfView(sprintf('%dSW',n),arrayGroup,pov,0,dovSW);
+x1{n} = PointOfView(sprintf('MS1-%dSW',n),antSysMS,pov,0,dovSW,[0 0 0],UEalgorithm,MShardware);
 
 pov  = [35,95,10]; n=n+1;
-x1{n} = PointOfView(sprintf('%dSE',n),arrayGroup,pov,0,dovSE);
+x1{n} = PointOfView(sprintf('MS2-%dSE',n),antSysMS,pov,0,dovSE,[0 0 0],UEalgorithm,MShardware);
 
 pov  = [75,15,10]; n=n+1;
-x1{n} = PointOfView(sprintf('%dNW',n),arrayGroup,pov,0,dovNW);
+x1{n} = PointOfView(sprintf('MS3-%dNW',n),antSysMS,pov,0,dovNW,[0 0 0],UEalgorithm,MShardware);
 
 figure(3);
 universe.Plot(x0,x1);
@@ -143,9 +154,15 @@ pause(0.1)
 figure(10);
 universe.PlotLOS(x0{1}.position,x1{1}.position);
 
-
 rain  = 0; % mm/h
-channelResponse = universe.Channels(x0,x1,freqs,rain);
+
+times = (0:1)*1e-6; % Steps [us] 
+
+snr = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
+SNR = 10*log10(snr)
+SE  = log2(1+snr)
+
+channelResponse = universe.Channels(x0,x1,freqs,times,rain);
 
 figure(20);
 universe.Response(x0,x1,freqs,rain);

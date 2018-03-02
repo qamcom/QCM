@@ -31,16 +31,17 @@ Bc = 1/D; % Coherence bandwith https://en.wikipedia.org/wiki/Coherence_bandwidth
   
 % Calculate channel densely enough (Twice Nyquist, Smaples at Bc/4)
 freqs = min(freqs):Bc/4:max(freqs);
-x = u.Channels(povs0,povs1,freqs,rain);
+x = u.Channels(povs0,povs1,freqs,0,rain);
 
 clf;
 Hf=[]; tags={}; 
 for ii=1:x.N
-    tmp = u.Channel(povs0{1},povs1{ii},freqs,rain);
-    [nf,ne0,ne1,np0,np1]=size(tmp.Hf);
-    Hf(1:nf,1:ne0,1:ne1,1:np0,1:np1,ii)=tmp.Hf;
+    tmp = u.Channel(povs0{1},povs1{ii},freqs,0,rain);
+    [ne0,ne1,nf]=size(tmp.Hf);
+    Hf(1:ne0,1:ne1,1:nf,ii)=tmp.Hf;
     tags{end+1} = tmp.tag;
 end
+Hf = permute(Hf,[3,1,2,4]);
 Nf = size(Hf,1);
 Nfft = 4*2^ceil(log2(Nf));
 SS = size(Hf);
@@ -50,8 +51,8 @@ Ht = zeros(SS);
 rc = cos((-(Nf-1)/2:(Nf-1)/2)/Nf*pi).^2';
 Ht(scind,:) = Hf(:,:).*repmat(rc,1,prod(SS(2:end)));
 Ht = ifft(Ht)*sqrt(Nf);
-Pf = 20*log10(permute(rms(rms(rms(rms(Hf,2),3),4),5),[1,6,2,3,4,5]));
-Pt = 20*log10(permute(rms(rms(rms(rms(Ht,2),3),4),5),[1,6,2,3,4,5]));
+Pf = 20*log10(permute(rms(rms(Hf,2),3),[1,4,2,3]));
+Pt = 20*log10(permute(rms(rms(Ht,2),3),[1,4,2,3]));
 Ts = 1/mean(diff(sort(x.freqs)));
 
 Fbins = x.freqs;
@@ -59,7 +60,7 @@ Tbins = (0:Nfft-1)/Nfft*Ts;
 Rbins = sys.c*Tbins;
 
 subplot(1,2,1); plot(Fbins/1e9, Pf,'LineWidth',2); title('Frequency Response'); ylabel('dB'); xlabel('Frequency [GHz]'); grid on; legend(tags);
-subplot(1,2,2); plot(Rbins,     Pt,'LineWidth',2); title('Temporal Response');   ylabel('dB'); xlabel('Distance [m]'); grid on; legend(tags);
+subplot(1,2,2); plot(Rbins,     Pt,'LineWidth',2); title('Temporal Response');  ylabel('dB'); xlabel('Distance [m]');    grid on; legend(tags);
 maxS = sys.maxRadius;%min(sys.maxRadius,Rbins(find(max(Pt,[],2)>max(Pt(:))-sys.raySelThreshold,1,'last')));
 axis([0 maxS*2 min(0,min(max(Pt))-sys.raySelThreshold-10) max(0,max(Pt(:)))]);
 

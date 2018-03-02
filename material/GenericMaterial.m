@@ -38,8 +38,7 @@ classdef GenericMaterial < Material
         scatteringLoss      = 50; % dB
         reflectionLoss      = 3;  % dB
         reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-        diffractionLoss     = 40; % dB
-        diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+        diffractionExponent =  1; % No dimension. Determines strengh outside perfect reflection
         
     end
     
@@ -58,7 +57,7 @@ classdef GenericMaterial < Material
                 m.tag     = tag;
                 m.shading = shading;
                 switch tag
-                    case 'Street',
+                    case 'Street'
                         m.color             = 3;
                         m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
                         
@@ -67,10 +66,9 @@ classdef GenericMaterial < Material
                         m.scatteringLoss      = 50; % dB
                         m.reflectionLoss      = 3;  % dB
                         m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-                        m.diffractionLoss     = 40; % dB
-                        m.diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.diffractionExponent = 1;  % No dimension. Determines strengh outside perfect reflection
                         
-                    case 'Wood',
+                    case 'Wood'
                         m.color             = 2;
                         m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
                         
@@ -79,10 +77,9 @@ classdef GenericMaterial < Material
                         m.scatteringLoss      = 50; % dB
                         m.reflectionLoss      = 3;  % dB
                         m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-                        m.diffractionLoss     = 40; % dB
-                        m.diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.diffractionExponent = 1;  % No dimension. Determines strengh outside perfect reflection
                         
-                    case 'CMU',
+                    case 'CMU'
                         m.color             = 1;
                         m.tag               = 'CMU';
                         m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
@@ -91,11 +88,10 @@ classdef GenericMaterial < Material
                         m.penetrationLoss     = 30; % dB
                         m.scatteringLoss      = 50; % dB
                         m.reflectionLoss      = 3;  % dB
-                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-                        m.diffractionLoss     = 40; % dB
-                        m.diffractionExponent = 30; % No dimension. Determines strengh outside perfect reflection
+                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect diffraction
+                        m.diffractionExponent =  1; % No dimension. Determines strengh outside perfect reflection
                         
-                    otherwise,
+                    otherwise
                         error('Not supported.')
                         
                 end
@@ -146,8 +142,7 @@ classdef GenericMaterial < Material
             end
             
             % Polarisation must align with reflection plane for perfect reflection.
-            % Penetration is not polarisation selective though....
-            polarisationCoeff   = repmat(max(penetrationRequired, sin(p0).*sin(p1)),1,Nf);
+            polarisationCoeff   = repmat(sin(p0).*sin(p1),1,Nf);
             
             % Reflection adjusted for diff from perfect reflection.
             % Scattering becomes dominant when reflection is weak.
@@ -194,7 +189,7 @@ classdef GenericMaterial < Material
             geometryCoeff = resPn*10^(Offset/20);
             
             % Scattering independent of polarisation?
-            y = penetrationCoeff.*(reflectionCoeff.*polarisationCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff);
+            y = penetrationCoeff.*polarisationCoeff.*(reflectionCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff);
             
         end
         
@@ -215,12 +210,11 @@ classdef GenericMaterial < Material
             % get from properties: dLoss,dExp
             % dLoss:    Diffraction loss max [dB]
             % rExp:     Diffraction strength drop off
-            if numel(m.freqs)<=1,
+            if numel(m.freqs)<=1
                 fbin = ones(size(freqs));
             else
                 [~,fbin]=min(abs(repmat(m.freqs(:),1,numel(freqs))-repmat(freqs,numel(m.freqs,1))));
             end
-            dLoss = m.diffractionLoss(fbin);
             dExp  = m.diffractionExponent(fbin);
             
             Nf = numel(freqs);
@@ -228,42 +222,34 @@ classdef GenericMaterial < Material
             
             penetrationCoeff = ~or(e0>(pi+c)/2,e1>(pi+c)/2);
             
-            
-            % Ray projected thru Atom corner. Incoming and outgoing ray
-            % Power proportional to projected atom corner length. Coeff for amplitude
-            areaCoeff = sqrt(res.*sqrt(abs(cos(e0).*cos(e1)))); % 1D
-            
             % Adjustment for diff from perfect(no) diffraction.
             % Projected atom area
-            resP = res.*sqrt(abs(cos(e0).*cos(e1)));
+            resP = res.*sqrt(abs(sin(a0).*sin(a1)));
             
             % Perfect Diffraction. Eg no change of direction
             Ed = pi-e0;
-            Ad = pi-a0;
+            Ad = -pi/2;
             
-            % Maximum diff to host a perfect diffraction (no deviation in elevation)
-            Et = resP.*(r0+r1)./(r0.*r1);
+            % Maximum azimuth diff over each projected corner element
+            At = 0.5*resP./((r0+r1).*(r0.*r1));
             
             % Diff hysteresis. (Perfect Diffraction somewhere on corner segment)
-            e1 = Ed+sign(e1-Ed).*max(0,abs(e1-Ed)-Et);
+            ad = a1-Ad;
+            at = sign(ad).*max(0,abs(ad)-At);
+            ed = e1-Ed;
             
-            % Two paths vs Surface
-            P0 = [ones(size(e0)),e0,a0];
-            P1 = [ones(size(e1)),e1,a1];
-            C0 = Cartesian3D(P0);
-            C1 = Cartesian3D(P1);
+            % Combined dev from perfect diffraction (Ray w/o deviation)
+            D=abs(at+1j*ed);            
             
-            % Perfect Reflection. #0 mirrored on surface normal
-            CD = -C0; % C0 defined as vector out-of surface.
-            
-            % Big Circle Diff of Retransmitted path (#1) vs Perfect Reflection path
-            D = AngleDiff(CD,C1);
+            % Empirical/adhoc Geometry normalisation / Calibration with "CornerTest.m"
+            Offset = 40;
             
             % Source: fig 6 in http://www.interdigital.com/research_papers/2014_02_18_60ghz_officebuilding_charac
-            diffractCoeff = repmat((max(0,cos(D(:)))),1,Nf).^repmat(dExp.*10.^(-dLoss/20),Nr,1);
+            dCdB = Offset*((repmat(1-sin(D),1,Nf)).^repmat(dExp,Nr,1)-1);
+            diffractCoeff = 10.^(dCdB/10);
             
             % Total diffracted signal...
-            y = repmat(penetrationCoeff.*areaCoeff,1,Nf).*diffractCoeff;
+            y = repmat(penetrationCoeff,1,Nf).*diffractCoeff;
         end
     end
 end

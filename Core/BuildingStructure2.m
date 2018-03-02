@@ -97,6 +97,7 @@ y.normal  = [y.normal;repmat([-1 -1 0]/sqrt(2)*reszz/2,nh,1)];
 % NW corner
 y.surface = [y.surface;[-bw/2*ones(nh,1), bd/2*ones(nh,1), zz(:)]];
 y.normal  = [y.normal;repmat([-1  1 0]/sqrt(2)*reszz/2,nh,1)];
+
 y.res     = [y.res;    reszz*ones(nh*4,1)];
 y.corner  = [y.corner; repmat([pi/2,0],4*nh,1)];
 y.material= [y.material; repmat(matWall,nh*4,1)];

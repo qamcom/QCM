@@ -23,19 +23,21 @@ classdef PointOfView
     
     properties
         tag;       % Identifier string
-        agroup;    % Array group class
+        antsys;    % Array group class
         position;  % Point Of View coordinate (x y z) [m] 
         elevation; % Elevation vs horizon. Positive up. Neg dn [degrees]
         azimuth;   % Azimuth. Zero East/Right/Along X-axis. Positive vs North. Neg vs South
         velocity;  % Speed vector (x y z) [m/s]
+        algorithm; % Assoc. Algorithm model
+        hardware;  % Assoc. Hardware model
     end
     
     methods
         
-        function x = PointOfView(tag,agroup,position,elevation,azimuth,velocity)
+        function x = PointOfView(tag,antsys,position,elevation,azimuth,velocity,algorithm,hardware)
             if nargin<6, velocity = [0 0 0]; end
             x.tag       = tag;
-            x.agroup    = agroup; % Array group class
+            x.antsys    = antsys; % Array group class
             x.position  = position;
             x.elevation = elevation;
             x.azimuth   = azimuth;
@@ -43,6 +45,12 @@ classdef PointOfView
                 x.velocity  = velocity;
             else
                 x.velocity = [0 0 0];
+            end
+            if exist('algorithm','var')
+                x.algorithm  = algorithm;
+            end
+            if exist('hardware','var')
+                x.hardware  = hardware;
             end
         end
         
@@ -55,17 +63,17 @@ classdef PointOfView
             pov = [0 0 0];
             
             % Array Group
-            ag  = p.agroup; 
+            as  = p.antsys; 
            
             % Array relative position
             if nargin>1
                 
-                pov   = ag.positions(index,:);
-                e     = ag.elevations(index);
-                a     = ag.azimuths(index);
-                rot   = ag.rotations(index);
-                pol   = ag.arrays{index}.pol;
-                array = ag.arrays{index};
+                pov   = as.positions(index,:);
+                e     = as.elevations(index);
+                a     = as.azimuths(index);
+                rot   = as.rotations(index);
+                pol   = as.arrays{index}.pol;
+                array = as.arrays{index};
                 
                 % Rotate individual array in Elevation, Azimuth and Rot
                 dov = RotateVectorY(dov,e);
@@ -105,7 +113,7 @@ classdef PointOfView
             plot3([pov(1) pov(1)+2*cn*nov(1)],[pov(2) pov(2)+2*cn*nov(2)],[pov(3) pov(3)+2*cn*nov(3)],'k:','LineWidth',4)
             text(pov(1),pov(2),pov(3),x.tag,'Color','black','FontSize',10,'HorizontalAlignment','center','Units','data' );
 
-            for index=1:x.agroup.n
+            for index=1:x.antsys.n
                 [pov,dov,nov,~,~,a] = x.xyz(index);
                 a.Plot(pov,dov,nov);
             end

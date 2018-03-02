@@ -18,7 +18,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [y,meta] = N2losCoeff(freqs,array0,array1,dp0,dp1,rotation0,rotation1,speed,materials0,materials1,corners0,corners1,radius0,radius1,radius01,elevation0,elevation1,azimuth0,azimuth1,elevation01,elevation10,azimuth01,azimuth10,offAzimuth0,offElevation0,offAzimuth1,offElevation1,pol0,pol1,res0,res1,los01,rain,raySelThreshold,bb)
+function [y,meta] = N2losCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,speed,materials0,materials1,corners0,corners1,radius0,radius1,radius01,elevation0,elevation1,azimuth0,azimuth1,elevation01,elevation10,azimuth01,azimuth10,offAzimuth0,offElevation0,offAzimuth1,offElevation1,pol0,pol1,res0,res1,los01,rain,raySelThreshold,bb)
 Nf = numel(freqs);
 Nr = numel(elevation1);
 
@@ -37,7 +37,7 @@ tmp = tmp0.*retransCoeff0.*retransCoeff1;
 c00 = squeeze(rms(tmp,2));
 
 % Expand to antenna array.
-[y00,ind00] = ExpandArray(freqs,tmp,raySelThreshold,speed,...
+[y00,ind00] = ExpandArray(tmp,freqs,times,raySelThreshold,speed,...
     radius0,offElevation0,offAzimuth0,array0,rotation0,...
     radius1,offElevation1,offAzimuth1,array1,rotation1);
 
@@ -51,7 +51,7 @@ if dp0,
     c10 = squeeze(rms(tmp,2));
     
     % Expand to antenna array.
-    [y10,ind10] = ExpandArray(freqs,tmp,raySelThreshold,speed,...
+    [y10,ind10] = ExpandArray(tmp,freqs,times,raySelThreshold,speed,...
         radius0,offElevation0,offAzimuth0,array0,rotation0,...
         radius1,offElevation1,offAzimuth1,array1,rotation1);
 end
@@ -64,7 +64,7 @@ if dp1,
     c01 = squeeze(rms(tmp,2));
     
     % Expand to antenna array.
-    [y01,ind01] = ExpandArray(freqs,tmp,raySelThreshold,speed,...
+    [y01,ind01] = ExpandArray(tmp,freqs,times,raySelThreshold,speed,...
         radius0,offElevation0,offAzimuth0,array0,rotation0,...
         radius1,offElevation1,offAzimuth1,array1,rotation1);
 end
@@ -76,21 +76,21 @@ if dp0 && dp1,
     c11 = squeeze(rms(tmp,2));
     
     % Expand to antenna array.
-    [y11,ind11] = ExpandArray(freqs,tmp,raySelThreshold,speed,...
+    [y11,ind11] = ExpandArray(tmp,freqs,times,raySelThreshold,speed,...
         radius0,offElevation0,offAzimuth0,array0,rotation0,...
         radius1,offElevation1,offAzimuth1,array1,rotation1);
 end
 
 if dp0 && dp1
-    y = cat(5,cat(4,y00,y10),cat(4,y01,y11));
+    y = cat(2,cat(1,y00,y10),cat(1,y01,y11));
     c = cat(3,cat(2,c00,c10),cat(2,c01,c11));
     ind = unique([ind00(:);ind10(:);ind01(:);ind11(:)]);
 elseif dp0
-    y = cat(4,y00,y10);
+    y = cat(1,y00,y10);
     c = cat(2,c00,c10);
     ind = unique([ind00(:);ind10(:)]);
 elseif dp1
-    y = cat(5,y00,y01);
+    y = cat(2,y00,y01);
     c = cat(3,c00,c01);
     ind = unique([ind00(:);ind01(:)]);
 else

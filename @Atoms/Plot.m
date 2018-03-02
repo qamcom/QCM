@@ -52,6 +52,10 @@ else
     line(x,y,z,'Color',forceColor,'LineWidth',2);
 end
 
+if sys.plotAtomNormals
+    error('Not implemented.')
+end
+
 % Plot Spheres (no surface, no corner)
 if sys.plotShadingSpheres
     ind = find([a.material.shading]'&(a.corner(:,1)==0));

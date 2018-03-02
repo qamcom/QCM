@@ -54,9 +54,13 @@ inds = u.nrofAtoms+(1:nAtom);
 
 u.atoms.normal(inds,1:3)  = RotateVectorZ(x.normal,rot);
 u.atoms.surface(inds,1:3) = RotateVectorZ(x.surface,rot)+repmat(pos,nAtom,1);
-u.atoms.material(inds,1)  = x.material;
 u.atoms.corner(inds,1:2)  = x.corner; 
 u.atoms.res(inds,1)       = x.res;
+if u.nrofAtoms
+    u.atoms.material(inds,1)  = x.material;
+else
+    u.atoms.material          = x.material;
+end
 
 u.nrofObj   = nn;
 u.nrofAtoms = u.nrofAtoms+nAtom;

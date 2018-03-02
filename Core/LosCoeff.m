@@ -18,7 +18,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [y,meta]=LosCoeff(freqs,array0,array1,dp0,dp1,rotation0,rotation1,speed,radius,offAzimuth0,offElevation0,offAzimuth1,offElevation1,polDiff,LOS,rain,raySelThreshold,bb)
+function [y,meta]=LosCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,speed,radius,offAzimuth0,offElevation0,offAzimuth1,offElevation1,polDiff,LOS,rain,raySelThreshold,bb)
 
 % Phase center los coeff 
 elemCoeff0      = array0.element.ElementCoeff(freqs,offAzimuth0,offElevation0);
@@ -32,7 +32,7 @@ tmp = elemCoeff0.*elemCoeff1.*distanceCoeff.*atmosphereCoeff*LOS;
 tmp0   = tmp.*cos(polDiff);
 
 % Expand to antenna array.
-y0 = ExpandArray(freqs,tmp0,raySelThreshold,speed,...
+y0 = ExpandArray(tmp0,freqs,times,raySelThreshold,speed,...
     radius,offElevation0,offAzimuth0,array0,rotation0,...
     radius,offElevation1,offAzimuth1,array1,rotation1);
 
@@ -41,19 +41,19 @@ if dp0 || dp1
     
     % Second orthogonal polarisation mode
     tmp1   = tmp.*sin(polDiff);
-    y1 = ExpandArray(freqs,tmp1,raySelThreshold,speed,...
+    y1 = ExpandArray(tmp1,freqs,times,raySelThreshold,speed,...
         radius,offElevation0,offAzimuth0,array0,rotation0,...
         radius,offElevation1,offAzimuth1,array1,rotation1);
 end
 
 if dp0 && dp1
-    y = cat(5,cat(4,y0,y1),cat(4,y1,y0));
+    y = cat(2,cat(1,y0,y1),cat(1,y1,y0));
     c = squeeze(rms([tmp0;tmp1],2));
 elseif dp0
-    y = cat(4,y0,y1);
+    y = cat(1,y0,y1);
     c = squeeze(rms([tmp0,tmp1],2));
 elseif dp1
-    y = cat(5,y0,y1);
+    y = cat(2,y0,y1);
     c = squeeze(rms([tmp0,tmp1],2));
 else
     y = y0;

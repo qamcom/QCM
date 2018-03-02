@@ -28,7 +28,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function y = Channel(u,pov0,pov1,freqs,rain,bb)
+function y = Channel(u,pov0,pov1,freqs,times,rain,bb)
 
 if ~exist('bb','var') || isempty(bb), bb=ones(1,numel(freqs)); end
 
@@ -39,26 +39,26 @@ losRadius = norm(pov1.position-pov0.position);
 
 
 
-losMetas   = cell(pov0.agroup.n,pov1.agroup.n);
-nlosMetas  = cell(pov0.agroup.n,pov1.agroup.n);
-n2losMetas = cell(pov0.agroup.n,pov1.agroup.n);
-n3losMetas = cell(pov0.agroup.n,pov1.agroup.n);
+losMetas   = cell(pov0.antsys.n,pov1.antsys.n);
+nlosMetas  = cell(pov0.antsys.n,pov1.antsys.n);
+n2losMetas = cell(pov0.antsys.n,pov1.antsys.n);
+n3losMetas = cell(pov0.antsys.n,pov1.antsys.n);
 
-for pp0 = 1:pov0.agroup.n
+for pp0 = 1:pov0.antsys.n
     
     [POV0,DOV0,NOV0,pol0,rot0,array0,vel0] = pov0.xyz(pp0);
     POL0 = RotateAroundAxis(NOV0,DOV0,pol0);
-    dp0 = pov0.agroup.dualpol;
+    dp0 = pov0.antsys.dualpol;
     
     % Find LOS atoms
     indLOS0 = u.FindLOS(POV0);
     
-    for pp1 = 1:pov1.agroup.n
+    for pp1 = 1:pov1.antsys.n
         
         
         [POV1,DOV1,NOV1,pol1,rot1,array1,vel1] = pov1.xyz(pp1);
         POL1 = RotateAroundAxis(NOV1,DOV1,pol1);
-        dp1 = pov1.agroup.dualpol;
+        dp1 = pov1.antsys.dualpol;
         
         % Find LOS atoms
         indLOS1    = u.FindLOS(POV1);
@@ -98,7 +98,7 @@ for pp0 = 1:pov0.agroup.n
                 speed1  = vdot(vel1,-path01)./losRadius; % Speed of pov1 approaching pov0
                 speed01 = speed0+speed1; % Speed of POVs approaching each others
                 
-                [losCoeff,losMeta] = LosCoeff(freqs,array0,array1,dp0,dp1,rot0,rot1,speed01,losRadius,...
+                [losCoeff,losMeta] = LosCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,losRadius,...
                     offAzimuth0,offElevation0,offAzimuth1,offElevation1,...
                     polDiff,LOS,rain,sys.raySelThreshold,bb);
                 
@@ -166,7 +166,7 @@ for pp0 = 1:pov0.agroup.n
                 pause(0.1);
             end
             
-            [nlosCoeff,nlosMeta] = NlosCoeff(freqs,array0,array1,dp0,dp1,rot0,rot1,speed01,...
+            [nlosCoeff,nlosMeta] = NlosCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,...
                 a.material,a.corner,radius0,radius1,...
                 elevation0,elevation1,azimuth0,azimuth1,...
                 offAzimuth0,offElevation0,offAzimuth1,offElevation1,...
@@ -186,7 +186,7 @@ for pp0 = 1:pov0.agroup.n
         % Higher order paths
         N0 = numel(indLOS00);
         N1 = numel(indLOS11);
-        if N0&&N1&&(sys.enableN2LOS || sys.enableN3LOS),
+        if N0&&N1&&(sys.enableN2LOS || sys.enableN3LOS)
             
             % Select closest secondary cluster locations vs _other_ POVs
             a0       = u.GetAtoms(indLOS00);
@@ -198,12 +198,10 @@ for pp0 = 1:pov0.agroup.n
             radius1  = vnorm(path1,2);
             sel0     = find(radius0<sys.secondOrderRange);
             sel1     = find(radius1<sys.secondOrderRange);
+            sel0(sys.secondOrderPaths:end)=[];
+            sel1(sys.secondOrderPaths:end)=[];
             N0       = numel(sel0);
             N1       = numel(sel1);
-            %                 N0       = min(N0,sys.traceSecondOrderPaths);
-            %                 N1       = min(N1,sys.traceSecondOrderPaths);
-            %                 sel0     = sel0(1:N0);
-            %                 sel1     = sel1(1:N1);
             
             if N0&&N1
                 % Select/Prune
@@ -253,9 +251,8 @@ for pp0 = 1:pov0.agroup.n
                 end
                 inds01 = find(LOS(:)~=0);
                 
-                %inds01 = 3839; %= 3611;
-                N      = numel(inds01);
-                if N && sys.enableN2LOS, % There were one or more 2 bounce paths
+                N = numel(inds01);
+                if N && sys.enableN2LOS % There were one or more 2 bounce paths
                     path01  = zeros(N,3);
                     inds0   = zeros(N,1);
                     inds1   = zeros(N,1);
@@ -314,7 +311,7 @@ for pp0 = 1:pov0.agroup.n
                     azimuth10= angle(pathS10n(:,1:2)*[1j;1]);
                     
                     
-                    [n2losCoeff,n2losMeta] = N2losCoeff(freqs,array0,array1,dp0,dp1,rot0,rot1,speed01,...
+                    [n2losCoeff,n2losMeta] = N2losCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,...
                         a0.material(inds0),a1.material(inds1),...
                         a0.corner(inds0,:),a1.corner(inds1,:),radius0(inds0),radius1(inds1),radius01(inds01),...
                         elevation0(inds0),elevation1(inds1),azimuth0,azimuth1,...
@@ -334,10 +331,10 @@ for pp0 = 1:pov0.agroup.n
                 inds01 = find(LOS(:)==0|~sys.enableN2LOS);
                 N = numel(inds01);
                 if N && sys.enableN3LOS, % There were one or more 2+ bounce paths
-                    path01 = zeros(N,3);
-                    inds0  = zeros(N,1);
-                    inds1  = zeros(N,1);
-                    speed01 = zeros(N);
+                    path01  = zeros(N,3);
+                    inds0   = zeros(N,1);
+                    inds1   = zeros(N,1);
+                    speed01 = zeros(N,1);
                     for ii=1:N
                         [ind0,ind1]=ind2sub(size(LOS),inds01(ii));
                         inds0(ii) = ind0;
@@ -346,7 +343,7 @@ for pp0 = 1:pov0.agroup.n
                         speed01(ii)  = speed0(ind0)+speed1(ind1); % Speed of POVs approaching each others (via a0 and a1)
                     end
                     
-                    [n3losCoeff,n3losMeta] = N3losCoeff(freqs,array0,array1,dp0,dp1,rot0,rot1,speed01,...
+                    [n3losCoeff,n3losMeta] = N3losCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,...
                         a0.material(inds0),a1.material(inds1),...
                         a0.corner(inds0,:),a1.corner(inds1,:),radius0(inds0),radius1(inds1),radius01(inds01),...
                         elevation0(inds0),elevation1(inds1),offAzimuth0(inds0),...

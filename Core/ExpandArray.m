@@ -1,18 +1,19 @@
-% Expand coeff for phase center into individual antenna elements
+% Expand coeff for phase center into individual antenna elements,a nd small
+% scale time samples
 % Using spherical wave front model
 % Also prune weak rays before expanding
 %
-% y = ExpandArray(freqs,x,threshold,speed,r0,e0,a0,array0,r1,e1,a1,array1)
+% y = ExpandArray(freqs,times,x,threshold,speed,r0,e0,a0,array0,r1,e1,a1,array1)
+% x(ray,freqbin): Complex Coeff for phase center. Incl element gain, pathloss, reflection loss etc
 % freqs:    Frequency vector [Hz]
 % threshold:Keep rays stronger than threshold (vs strongest) [dB]
-% speed:    Doppler speed (apporaching) [m/s]
-% x(ray,freqbin): Complex Coeff for phase center. Incl element gain, pathloss, reflection loss etc
+% speed:    Doppler speed (apporaching) [m/s] per ray
 % r0,r1:    Ray distance to source [m]
 % e0,e1:    Elevation "phase center" vs "ray source"
 % a0,a1:    Azimuth "phase center" vs "ray source"
 % array0,array1: Endpoints. Array class
 %
-% y:        Channel coeff. y(freq-index,elm0,elm1)
+% y(elm0Ind,elm1Ind,freqInd,timeInd):    Channel coeff. 
 %
 %
 % -------------------------------------------------------------------------
@@ -34,17 +35,21 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [y,raySel] = ExpandArray(freqs,x,raySelThreshold,speed,...
+function [y,raySel] = ExpandArray(x,freqs,times,raySelThreshold,speed,...
     radius0,elevation0,azimuth0,array0,rotation0,...
     radius1,elevation1,azimuth1,array1,rotation1)
 
 % Keep only significant rays
 rayPower    = 20*log10(rms(double(x),2));
 raySel      = find(rayPower>max(rayPower)-raySelThreshold);
+Nr          = numel(raySel);
+Nt          = numel(times);
+Nf          = numel(freqs);
 
-if isempty(raySel)
+
+if Nr==0
     
-    y = zeros(numel(freqs),array0.nelem,array1.nelem);
+    y = zeros(array0.nelem,array1.nelem,Nf,Nt);
     
 else
     
@@ -58,19 +63,28 @@ else
     speed       = speed(raySel);
     
     % Add doppler shift (translate spectrum of each selected ray)
+    doppler     = mean(speed(:)*freqs(:)'/sys.c,2); % [Hertz]
     if sys.enableDopplerSpread
-        doppler     = mean(speed(:)*freqs(:)'/sys.c,2); % [Hertz]
         df          = mean(diff(freqs));
         di          = doppler/df;
         x           = Skew(x,di);
     end
     
-    % Array coeff per endpoint
+    % Expand time samples. Small scale temporal extrapolation
+    % x(ray,freq) => x(ray,freq,time)
+    A = repmat(x,[1,1,Nt]);
+    F = repmat(doppler,1,Nf)+repmat(freqs,Nr,1);
+    P = multiprod(F,1j*times*2*pi,[2,3],[1,2]);
+    x = permute(A.*exp(P),[1,2,4,5,3]);
+    
+    % Array coeff per endpoint. Small scale Spatial extrapolation(spherical wave)
     arrayCoeff0 = array0.ArrayCoeff(freqs,radius0,elevation0,azimuth0,rotation0);
     arrayCoeff1 = array1.ArrayCoeff(freqs,radius1,elevation1,azimuth1,rotation1);
     
-    % Map rays on all array element combinations
+    % Map rays on all array element combinations. Then sum over rays.
+    % These two rows are a huge part of all ops in QCM... 
+    % Candidate for GPU and/or Cluster acceleration
     arrayCoeff  = multiprod(arrayCoeff0,permute(arrayCoeff1,[1,2,4,3]),[3,4]);
-    y           = permute((sum(multiprod(x,arrayCoeff,[3,4]),1)),[2,3,4,1]);
+    y = permute((sum(multiprod(x,arrayCoeff,[3,4]),1)),[3,4,2,5,1]);
     
 end

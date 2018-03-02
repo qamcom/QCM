@@ -30,7 +30,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function y=Channels(u,x0,x1,freqs,rain,bb)
+function y=Channels(u,x0,x1,freqs,times,rain,bb)
 
 if ~exist('bb','var') || isempty(bb), bb=ones(1,numel(freqs)); end
 tic
@@ -53,6 +53,7 @@ else
     x1 = x0;
 end
 y.freqs = freqs;
+y.times = times;
 
 verbose = (numel(x0)*numel(x1)>1);
 
@@ -88,7 +89,7 @@ for endpoint0 = 1:y.N0
             y.endpoints(pp,:) = [endpoint0, endpoint1];
             
             % Get Channel
-            y.link{pp} = u.Channel(pov0,pov1,freqs,rain,bb);
+            y.link{pp} = u.Channel(pov0,pov1,freqs,times,rain,bb);
             CC = CC+numel(y.link{pp}.Hf);
                 
         end

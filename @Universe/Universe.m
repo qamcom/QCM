@@ -48,13 +48,8 @@ classdef Universe < handle
                 u.scenario  = scenario;
             else
                 u.scenario  = 'hata-urban-smallcity';
-            end
-            
-            u.atoms.normal   = zeros(0,3);
-            u.atoms.surface  = zeros(0,3);
-            u.atoms.corner   = zeros(0,2);
-            u.atoms.res      = zeros(0,1);
-            
+            end           
+            u.atoms = Atoms;
         end
         
          % Clear LOS cache
@@ -71,10 +66,10 @@ classdef Universe < handle
         y = GetAtoms(u,inds);
 
         % Render channel between several point-of-view pairs in universe
-        y = Channels(u,freqs,rain,x0,x1,bb);
+        y = Channels(u,x0,x1,freqs,times,rain,bb);
         
         % Render channel between a single point-of-view pair in universe
-        y = Channel(u,freqs,rain,pov0,pov1,bb);
+        y = Channel(u,x0,x1,freqs,times,rain,bb);
         
         % Random nudge of location and alignmnet of atoms in universe
         function natoms = Nudge(u,ratio,seed)
@@ -87,10 +82,41 @@ classdef Universe < handle
             natoms = u.nrofAtoms;
         end
         
+        % System Evaluation
+        % 0. Calculate detectors (P&E) for each link.
+        % 1. Calculate XNR matrix
+        % 2. Interference summed at RXpov's using activity factors A
+        % 3. Add thermal noise
+        % 4. Produce post equalizer SINR
+        function snr = System(u,TXpov,RXpov,A,freqs,times,rain)
+            Nrx = numel(RXpov);
+            Ntx = numel(TXpov);
+            BW = (max(freqs)-min(freqs));
+            ii=0;
+            for rxi = 1:Nrx
+                for txi = 1:Ntx
+                    if A(txi,rxi)
+                        ii = ii+1;
+                        linkInd(txi,rxi)=ii;
+                        TX   = TXpov{txi};
+                        RX   = RXpov{rxi};
+                        link = u.Channel(RX,TX,freqs,times,rain);
+                        H    = link.Hf;
+                        P    = TX.algorithm.DesignPrecoder(H,TX.hardware.power,RX.hardware.nf,BW);
+                        HP   = TX.algorithm.Precode(H,P);
+                        E    = RX.algorithm.DesignEqualizer(HP,RX.hardware.nf,BW);
+                        EHP  = RX.algorithm.Equalize(HP,E);
+                        snr(txi,rxi)=rms(EHP(:)).^2; % (X)Link signal vs Noise floor
+                    end
+                end
+            end
+            
+            
+        end
         
+        % Visualize channel
         y = Trace(u,pov0,pov1,freqs,rain);
         [Hf,Fbins,Ht,Tbins,Rbins,Pt,Pf]=Response(u,povs0,povs1,freqs,rain);
-
         
         % Plot 3D picture to illustrate materials
         Plot(u,x0,x1,forceColor,pbox);           

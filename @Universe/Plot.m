@@ -43,31 +43,33 @@ else
 end
 
 % Select in atoms to actually plot
-border=0.2;
-if exist('pbox','var')&&~isempty(pbox)
-    inrange = zeros(size(a.surface,1),1);
-    dx = (pbox(2,1)-pbox(1,1));
-    dy = (pbox(2,2)-pbox(1,2));
-    bx = max(((1+2*border)*dy-dx)/2,border*dx);
-    by = max(((1+2*border)*dx-dy)/2,border*dy);
-    inrange = inrange|(a.surface(:,1)>pbox(1,1)-bx&a.surface(:,1)<pbox(2,1)+bx&a.surface(:,2)>pbox(1,2)-by&a.surface(:,2)<pbox(2,2)+by);
-    a=a.Prune(find(inrange));
-elseif size(pov,1)
-    inrange = zeros(size(a.surface,1),1);
-    for ii=1:size(pov,1)
-        inrange=inrange|(vnorm(VectorAdd(a.surface,-pov(ii,:)),2)<sys.maxRadius);
-    end
-    a=a.Prune(find(inrange));  
-end
-    
-% Render Universe and POV for LOS
 clf;
-if exist('forceColor','var')&&~isempty(forceColor),
-    a.Plot(forceColor);
-else
-    a.Plot;
+border=0.2;
+if ~isempty(a.res)
+    if exist('pbox','var')&&~isempty(pbox)
+        inrange = zeros(size(a.surface,1),1);
+        dx = (pbox(2,1)-pbox(1,1));
+        dy = (pbox(2,2)-pbox(1,2));
+        bx = max(((1+2*border)*dy-dx)/2,border*dx);
+        by = max(((1+2*border)*dx-dy)/2,border*dy);
+        inrange = inrange|(a.surface(:,1)>pbox(1,1)-bx&a.surface(:,1)<pbox(2,1)+bx&a.surface(:,2)>pbox(1,2)-by&a.surface(:,2)<pbox(2,2)+by);
+        a=a.Prune(find(inrange));
+    elseif size(pov,1)
+        inrange = zeros(size(a.surface,1),1);
+        for ii=1:size(pov,1)
+            inrange=inrange|(vnorm(VectorAdd(a.surface,-pov(ii,:)),2)<sys.maxRadius);
+        end
+        a=a.Prune(find(inrange));
+    end
+    
+    
+    % Render Universe and POV for LOS
+    if exist('forceColor','var')&&~isempty(forceColor),
+        a.Plot(forceColor);
+    else
+        a.Plot;
+    end
 end
-
 % Plot endpoints
 if nargin>1
     for ii=1:numel(x0)
