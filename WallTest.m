@@ -24,8 +24,8 @@ rng(1); % Random seed
 addpath(genpath('./'));
 
 Nit = 30;
-RR  = [5 10 20 40 80 160];
-rr  = [16 8 4 2];
+RR  = ([5 10 20]);
+rr  = [2,4,8];
 
 % Freq bins
 freqs = 60e9; % [Hz] One freq bin per per 150kHz
@@ -64,7 +64,7 @@ for ir = 1:numel(rr)
     pp=0;
     for iR  = 1:numel(RR)
         
-        R=RR(iR);
+        R=RR(iR)*resGround/min(resGround);
         WALLSIZE = max(R*4,resGround*10);
         
         pp=pp+1;

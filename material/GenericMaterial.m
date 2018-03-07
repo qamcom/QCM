@@ -220,7 +220,7 @@ classdef GenericMaterial < Material
             Nf = numel(freqs);
             Nr = numel(c);
             
-            penetrationCoeff = ~or(e0>(pi+c)/2,e1>(pi+c)/2);
+            penetrationCoeff = sign(sin(a0).*sin(a1))<0&&~or(e0>(pi+c)/2,e1>(pi+c)/2);
             
             % Adjustment for diff from perfect(no) diffraction.
             % Projected atom area
@@ -228,24 +228,26 @@ classdef GenericMaterial < Material
             
             % Perfect Diffraction. Eg no change of direction
             Ed = pi-e0;
-            Ad = -pi/2;
+            Ad = pi/2;
+            
+            % Elevation diff
+            ed = abs(e1-Ed);
             
             % Maximum azimuth diff over each projected corner element
             At = 0.5*resP./((r0+r1).*(r0.*r1));
             
-            % Diff hysteresis. (Perfect Diffraction somewhere on corner segment)
-            ad = a1-Ad;
-            at = sign(ad).*max(0,abs(ad)-At);
-            ed = e1-Ed;
+            % Azimuth Diff hysteresis. (Perfect Diffraction somewhere on corner segment)
+            ad0 = abs(abs(a0)-Ad);
+            ad1 = abs(abs(a1)-Ad);
+            at0 = min(pi/2,max(0,ad0-At));
+            at1 = min(pi/2,max(0,ad1-At));
             
-            % Combined dev from perfect diffraction (Ray w/o deviation)
-            D=abs(at+1j*ed);            
             
             % Empirical/adhoc Geometry normalisation / Calibration with "CornerTest.m"
             Offset = 40;
             
             % Source: fig 6 in http://www.interdigital.com/research_papers/2014_02_18_60ghz_officebuilding_charac
-            dCdB = Offset*((repmat(1-sin(D),1,Nf)).^repmat(dExp,Nr,1)-1);
+            dCdB = Offset*((repmat((1-sin(ed)).*(1-sin(at0)).*(1-sin(at1)),1,Nf)).^repmat(dExp,Nr,1)-1);
             diffractCoeff = 10.^(dCdB/10);
             
             % Total diffracted signal...

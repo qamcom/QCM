@@ -31,7 +31,7 @@ classdef sys
       c                     = 3e8; % Speed of light [m/s]
       kB                    = 1.38e-23; % J/K, Boltzmann
       T                     = 290; % [K] System temp
-      raySelThreshold       = 50;  % Discard rays weaker than this value vs strongest ray [dB] 
+      raySelThreshold       = 80;  % Discard rays weaker than this value vs strongest ray [dB] 
       secondOrderRange      = 30;  % Don't look further than this to find 2nd bounce [m]
       secondOrderPaths      = 100; % Max nrof second order path endpoints
       enableDopplerSpread   = 0;   % 1 => Model doppler of each ray. 0 => don't
@@ -42,9 +42,9 @@ classdef sys
       enableN3LOS           = 0;   % Use stochastic model for >3rd (and 2nd if disabled) order paths if enabled (=1). 
       quickTrace            = 1;   % Somewhat faster ray tracing, some infrequent mistakes possible
       bubbleTrace           = 1;   % Use shading spheres (bubbles) for faster ray tracing
-      forceNoScattering     = 1;
+      forceNoScattering     = 0;
       forceNoDiffraction    = 0;
-      forceNoReflection     = 1;
+      forceNoReflection     = 0;
       forceNoCorners        = 0;
       forceNoPenetration    = 1;
       plotCornerPatches     = 0;

@@ -128,10 +128,10 @@ for pp0 = 1:pov0.antsys.n
             pathS0 = VectorOnPlane(path0,a.normal);
             pathS1 = VectorOnPlane(path1,a.normal);
             
-            % Corner edge
+            % Corner edge (or surface orientation)
             normREA = Polar3D(a.normal); en=normREA(:,2); an=normREA(:,3);
             
-            % Path angle vs corner edge
+            % Path angle vs corner edge (or surface orientation)
             pathS0n  = RotateVectorZ(RotateVectorY(RotateVectorZ(pathS0,-an),en),-pi/2-a.corner(:,2));
             azimuth0 = angle(pathS0n(:,1:2) *[1j;1]);
             pathS1n  = RotateVectorZ(RotateVectorY(RotateVectorZ(pathS1,-an),en),-pi/2-a.corner(:,2));
