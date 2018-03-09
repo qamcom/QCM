@@ -96,9 +96,10 @@ antSysMS = AntennaSystem('SimpleTest',{arrayMS},[0 0 0],0,0,0,dualpol);
 
 % Buildings
 n=0;
-for ny=-(Ny-1)/2:(Ny-1)/2,
-    for nx=-(Nx-1)/2:(Nx-1)/2,
+for ny=-(Ny-1)/2:(Ny-1)/2
+    for nx=-(Nx-1)/2:(Nx-1)/2
         n = n+1;
+        %if n==3
         b0       = 0; % Building ground zero
         bh(n)    = bh_mean+bh_std*randn(1); % Building height
         bx       = 40/Nx;
@@ -108,10 +109,11 @@ for ny=-(Ny-1)/2:(Ny-1)/2,
         rot      = 0;
         building = BuildingStructure(corners,bh(n),resHouse,matWall,matRoof);
         universe.AddAtoms(sprintf('Building%d',n),building,pos,rot);
+        %end
     end
 end
 
-% Add tree to universe
+%Add tree to universe
 tt = TreeStructure([55 55 0],3,13,matTrunk,matFoliage);
 universe.AddAtoms(sprintf('Tree%d',1),tt);
 tt = TreeStructure([55 10 0],6,13,matTrunk,matFoliage);
@@ -136,16 +138,17 @@ MShardware  = GenericHardware;
 UEalgorithm = BasicUEAlgorithm;
 
 pov  = [35,15,10]; n=0;
-x0{1} = PointOfView(sprintf('BS-%dNE',n),antSysBS,pov,0,dovNE,[0 0 0],BSalgorithm,BShardware);
+x0{1} = PointOfView(sprintf('BS%d',n),antSysBS,pov,0,dovNE,[0 0 0],BSalgorithm,BShardware);
 
-pov  = [75,95,10]; n=n+1;
-x1{n} = PointOfView(sprintf('MS1-%dSW',n),antSysMS,pov,0,dovSW,[0 0 0],UEalgorithm,MShardware);
+pov  = [95,15,10]; n=n+1;
+x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovNW,[0 0 0],UEalgorithm,MShardware);
+
+pov  = [95,95,10]; n=n+1;
+x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovSW,[0 0 0],UEalgorithm,MShardware);
 
 pov  = [35,95,10]; n=n+1;
-x1{n} = PointOfView(sprintf('MS2-%dSE',n),antSysMS,pov,0,dovSE,[0 0 0],UEalgorithm,MShardware);
+x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovSE,[0 0 0],UEalgorithm,MShardware);
 
-pov  = [75,15,10]; n=n+1;
-x1{n} = PointOfView(sprintf('MS3-%dNW',n),antSysMS,pov,0,dovNW,[0 0 0],UEalgorithm,MShardware);
 
 figure(3);
 universe.Plot(x0,x1);
@@ -158,11 +161,21 @@ rain  = 0; % mm/h
 
 times = (0:1)*1e-6; % Steps [us] 
 
-snr = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
-SNR = 10*log10(snr)
-SE  = log2(1+snr)
+[snrmu,snrsu,snr0] = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
 
-channelResponse = universe.Channels(x0,x1,freqs,times,rain);
+% MU/SC data (Precoder and Equalizer to maximize concurrent links to all MS(x1))
+SINRmu_dB     = 10*log10(snrmu)
+SEmu_bps2Hz  = log2(1+snrmu)
+
+% SU/SC data (Precoder and Equalizer to maximize exclusive link to each MS(x1))
+SNRsu_dB     = 10*log10(snrsu)
+SEsu_bps2Hz  = log2(1+snrsu)
+
+% SC Control plane (No precoder)
+SNR0_dB     = 10*log10(snr0)
+SE0_bps2Hz  = log2(1+snr0)
+
+%channelResponse = universe.Channels(x0,x1,freqs,times,rain);
 
 figure(20);
 universe.Response(x0,x1,freqs,rain);

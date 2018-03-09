@@ -142,7 +142,7 @@ for ir = 1:numel(rr)
             a1 = 0;
             e1 = pi;
             A0 = -pi/2:pi/16:pi/2;
-            E0 = -pi/2:pi/356:pi/2;
+            E0 = -pi/2:pi/16:pi/2;
             
             
             clear x0;
