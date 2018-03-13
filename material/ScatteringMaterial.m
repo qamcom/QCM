@@ -42,16 +42,19 @@ classdef ScatteringMaterial < Material
     properties (SetAccess = private)
         tag     = 'Default';
         color   = '1';
-        shading = 0;
+        shading = 1;
     end
     
     methods
         
         % Constructor
-        function m=ScatteringMaterial(tag,loss)
+        function m=ScatteringMaterial(tag,loss,shading)
             if nargin
                 m.tag            = tag;
                 m.scatteringLoss = loss;
+                if nargin==3
+                    m.shading    = shading;
+                end
             end
         end
         

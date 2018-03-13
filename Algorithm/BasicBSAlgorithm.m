@@ -27,16 +27,34 @@ classdef BasicBSAlgorithm < Algorithm
        
     methods 
         
-        function O = OrthoTest(a,H) % Checking orthogonality btw links (btw MSs)
-%             nR = size(R,3);
-%             O  = nan(nR);
-%             for n0=1:nR
-%                 H0=H(:,:,n0);
-%                 for n1=1:nR
-%                     H1=H(:,:,n1);
-%                     O(n0,n1)=H0'*H1/(norm(H0)*norm(H1));
-%                 end
-%             end
+        % Checking orthogonality btw links (btw MSs)
+        % H(ant-ms,ant-bs,freq-bin,time-bin)
+        % snr(ant-ms,1): SU snr. alt.  linear. snr(ant-ms,1,freq-bin,time-bin)
+        % O(ant-ms,ant-ms,freq-bin,time-bin)  1 => Full correlation
+        % sinr, same size as snr (linear, 10log10(sinr) to get dB)
+        function [O,sinr] = OrthoTest(a,H,snr) 
+            sz = size(H); 
+            N =  sz(1);
+            O  = zeros([N,N,sz(3:end)]);
+            for n0=1:N
+                H0=H(n0,:,:);
+                for n1=(n0+1):N
+                    H1=H(n1,:,:);
+                    tmp = dot(H0,H1,2)./(vnorm(H0,2).*vnorm(H1,2));
+                    O(n0,n1,:) = tmp;
+                    O(n1,n0,:) = tmp; % Reciprocal
+                end
+            end
+            if nargout>1 && nargin>1
+                intf   = sum(abs(O).^2.*snr,2);
+                noise  = 1;
+                signal = snr(:);
+                sinr   = signal./(noise+intf);
+
+                if size(snr,3)==1, sinr=mean(sinr,3); end
+                if size(snr,4)==1, sinr=mean(sinr,4); end
+                sinr = reshape(sinr,size(snr));
+            end
         end
                 
         % H(ant-tx,ant-rx,freq-bin,time-bin)
@@ -44,7 +62,6 @@ classdef BasicBSAlgorithm < Algorithm
         % NF, Rx Noise Figure [dB]
         % BW, Bandwidth [Hz]
         % P(ant-tx,stream-tx,freq-bin,time-bin)
-        % NOTE: Power level part of precoder! (eg. norm(P)=1 and rms(signal)=1 => Pout 1 Watt)
         function P = DesignPrecoder(a,H,Pt,NF,BW)
             [Nrx,Ntx,Nf,Nt]=size(H);
 
@@ -62,7 +79,7 @@ classdef BasicBSAlgorithm < Algorithm
                 for t=1:Nt
                     Hf = squeeze(H(:,:,f,t));
                     Pf = Hf'/(Hf*Hf'+alfa*eye(Nrx));
-                    P(:,:,f,t)=Pf/norm(Pf,'fro')*sqrt(pt);
+                    P(:,:,f,t)=Pf/norm(Pf,'fro');
                 end
             end
                   

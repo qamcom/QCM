@@ -49,7 +49,6 @@ classdef BasicUEAlgorithm < Algorithm
         % NF, Rx Noise Figure [dB]
         % BW, Bandwidth [Hz]
         % E(stream-rx,ant-rx,freq-bin,time-bin)
-        % NOTE: Power level normalized to noise floor (noise power = 1)
         function E = DesignEqualizer(a,Hp,NF,BW)
             [Nr,Ns,Nf,Nt]=size(Hp);
 
@@ -62,7 +61,7 @@ classdef BasicUEAlgorithm < Algorithm
                 for t=1:Nt
                     Hf = squeeze(Hp(:,:,f,t));
                     Ef = Hf'/(Hf*Hf'+alfa*eye( Nr));
-                    E(:,:,f,t)=Ef/norm(Ef,'fro')/sqrt(pn);
+                    E(:,:,f,t)=Ef/norm(Ef,'fro');
                 end
             end
         end

@@ -27,10 +27,14 @@
 function [Hf,Fbins,Ht,Tbins,Rbins,Pt,Pf]=Response(u,povs0,povs1,freqs,rain)
 
 D  = sys.maxRadius*2/sys.c; % Max delay spread [sec] approx as twice emax ray trace distance.
+d  = sys.largeScaleResolution/sys.c;% Min delay spread [sec].
 Bc = 1/D; % Coherence bandwith https://en.wikipedia.org/wiki/Coherence_bandwidth
+Bt = 1/d; % Total BW
+Nf = round(Bt/Bc/2);
   
-% Calculate channel densely enough (Twice Nyquist, Smaples at Bc/4)
-freqs = min(freqs):Bc/4:max(freqs);
+% Calculate channel densely enough (Twice Nyquist, Samples at Bc/4)
+freqs = max(Nf*Bc,mean(freqs))+(-Nf:Nf)*Bc;
+
 x = u.Channels(povs0,povs1,freqs,0,rain);
 
 clf;

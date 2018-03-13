@@ -44,15 +44,15 @@ Nx=4; Ny=4;
 bh_mean = 20; bh_std = 5;
 
 % Resolution
-resHouse  = 5;  % House tile size
-resGround = 5; % Ground tile size
+resHouse  = 1;  % House tile size
+resGround = 2; % Ground tile size
 
 % Materials
 matGround   = GenericMaterial('Street',0); % Ground cannot cast shade.
 matWall     = GenericMaterial('CMU',1);
 matRoof     = GenericMaterial('Wood',1);
 matTrunk    = GenericMaterial('Wood',0);
-matFoliage  = ScatteringMaterial('Foliage',-10);
+matFoliage  = ScatteringMaterial('Foliage',10,1);
 
 
 % -------------------------------------------------------------------------
@@ -81,7 +81,7 @@ dualpol = 1;        % 1 == Also analyze perpendicular polarisation mode
 elempos   = [hp(:),vp(:)]*lambda; % Array config H,V
 
 % Define element for arrays
-element = Element('isotropic');
+element = Element('patch');
 
 % Define array
 
@@ -114,16 +114,16 @@ for ny=-(Ny-1)/2:(Ny-1)/2
 end
 
 %Add tree to universe
-tt = TreeStructure([55 55 0],3,13,matTrunk,matFoliage);
-universe.AddAtoms(sprintf('Tree%d',1),tt);
-tt = TreeStructure([55 10 0],6,13,matTrunk,matFoliage);
-universe.AddAtoms(sprintf('Tree%d',2),tt);
-tt = TreeStructure([55 100 0],3,13,matTrunk,matFoliage);
-universe.AddAtoms(sprintf('Tree%d',3),tt);
-tt = TreeStructure([10 55 0],4,14,matTrunk,matFoliage);
-universe.AddAtoms(sprintf('Tree%d',4),tt);
-tt = TreeStructure([100 55 0],4,11,matTrunk,matFoliage);
-universe.AddAtoms(sprintf('Tree%d',5),tt);
+% tt = TreeStructure([55 55 0],3,13,matTrunk,matFoliage);
+% universe.AddAtoms(sprintf('Tree%d',1),tt);
+% tt = TreeStructure([55 10 0],6,13,matTrunk,matFoliage);
+% universe.AddAtoms(sprintf('Tree%d',2),tt);
+% tt = TreeStructure([55 100 0],3,13,matTrunk,matFoliage);
+% universe.AddAtoms(sprintf('Tree%d',3),tt);
+% tt = TreeStructure([10 55 0],4,14,matTrunk,matFoliage);
+% universe.AddAtoms(sprintf('Tree%d',4),tt);
+% tt = TreeStructure([100 55 0],4,11,matTrunk,matFoliage);
+% universe.AddAtoms(sprintf('Tree%d',5),tt);
 
 x0=cell(0);
 x1=cell(0);
@@ -161,15 +161,19 @@ rain  = 0; % mm/h
 
 times = (0:1)*1e-6; % Steps [us] 
 
-[snrmu,snrsu,snr0] = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
+[sinr,snr,snr0,sinrPredict] = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
 
 % MU/SC data (Precoder and Equalizer to maximize concurrent links to all MS(x1))
-SINRmu_dB     = 10*log10(snrmu)
-SEmu_bps2Hz  = log2(1+snrmu)
+predictedSINRmu_dB    = 10*log10(sinrPredict)
+predictedSEmu_bps2Hz  = log2(1+sinrPredict)
+
+% MU/SC data (Precoder and Equalizer to maximize concurrent links to all MS(x1))
+SINRmu_dB    = 10*log10(sinr)
+SEmu_bps2Hz  = log2(1+sinr)
 
 % SU/SC data (Precoder and Equalizer to maximize exclusive link to each MS(x1))
-SNRsu_dB     = 10*log10(snrsu)
-SEsu_bps2Hz  = log2(1+snrsu)
+SNRsu_dB     = 10*log10(snr)
+SEsu_bps2Hz  = log2(1+snr)
 
 % SC Control plane (No precoder)
 SNR0_dB     = 10*log10(snr0)

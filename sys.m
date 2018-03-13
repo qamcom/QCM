@@ -38,7 +38,7 @@ classdef sys
       enableLOS             = 1;   % Trace first order path (LOS) if enabled (=1)
       forceLOS              = 0;   % Ensure LOS channel. Disregard any shading for LOS path. Overrides "enableLOS"
       enableNLOS            = 1;   % Trace second order paths if enabled (=1)
-      enableN2LOS           = 1;   % Trace 3rd order paths if enabled (=1)
+      enableN2LOS           = 0;   % Trace 3rd order paths if enabled (=1)
       enableN3LOS           = 0;   % Use stochastic model for >3rd (and 2nd if disabled) order paths if enabled (=1). 
       quickTrace            = 1;   % Somewhat faster ray tracing, some infrequent mistakes possible
       bubbleTrace           = 1;   % Use shading spheres (bubbles) for faster ray tracing

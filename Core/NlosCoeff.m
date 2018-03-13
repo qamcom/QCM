@@ -27,7 +27,9 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [y,meta] = NlosCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,speed,materials,corners,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,offAzimuth0,offElevation0,offAzimuth1,offElevation1,pol0,pol1,res,rain,raySelThreshold,bb)
+function [y,meta] = NlosCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,...
+    speed,materials,corners,radius0,radius1,elevation0,elevation1,azimuth0,azimuth1,...
+    offAzimuth0,offElevation0,offAzimuth1,offElevation1,pol0,pol1,res,rain,raySelThreshold,bb)
 Nf = numel(freqs);
 Nr = numel(elevation1);
 

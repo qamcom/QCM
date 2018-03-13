@@ -37,8 +37,7 @@ classdef GenericMaterial < Material
         penetrationLoss     = 30; % dB
         scatteringLoss      = 50; % dB
         reflectionLoss      = 3;  % dB
-        reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
-        diffractionExponent =  1; % No dimension. Determines strengh outside perfect reflection
+        diffractionExponent = 1;  % No dimension. Determines strengh outside perfect reflection
         
     end
     
@@ -65,7 +64,6 @@ classdef GenericMaterial < Material
                         m.penetrationLoss     = 30; % dB
                         m.scatteringLoss      = 50; % dB
                         m.reflectionLoss      = 3;  % dB
-                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
                         m.diffractionExponent = 1;  % No dimension. Determines strengh outside perfect reflection
                         
                     case 'Wood'
@@ -76,7 +74,6 @@ classdef GenericMaterial < Material
                         m.penetrationLoss     = 30; % dB
                         m.scatteringLoss      = 50; % dB
                         m.reflectionLoss      = 3;  % dB
-                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect reflection
                         m.diffractionExponent = 1;  % No dimension. Determines strengh outside perfect reflection
                         
                     case 'CMU'
@@ -88,7 +85,6 @@ classdef GenericMaterial < Material
                         m.penetrationLoss     = 30; % dB
                         m.scatteringLoss      = 50; % dB
                         m.reflectionLoss      = 3;  % dB
-                        m.reflectionExponent  = 30; % No dimension. Determines strengh outside perfect diffraction
                         m.diffractionExponent =  1; % No dimension. Determines strengh outside perfect reflection
                         
                     otherwise
@@ -117,7 +113,6 @@ classdef GenericMaterial < Material
             % pLoss:    Penetration loss [dB]
             % sLoss:    Scattering loss floor [dB]
             % rLoss:    Reflection loss min [dB]
-            % rExp:     Reflection strength drop off
             if numel(m.freqs)<=1,
                 fbin = ones(size(freqs));
             else
@@ -126,10 +121,7 @@ classdef GenericMaterial < Material
             pLoss = m.penetrationLoss(fbin);
             sLoss = m.scatteringLoss(fbin);
             rLoss = m.reflectionLoss(fbin);
-            rExp  = m.reflectionExponent(fbin);
-            
-            
-            
+                        
             Nr = numel(r0);
             Nf = numel(freqs);
             
@@ -142,7 +134,8 @@ classdef GenericMaterial < Material
             end
             
             % Polarisation must align with reflection plane for perfect reflection.
-            polarisationCoeff   = repmat(sin(p0).*sin(p1),1,Nf);
+            polLoss = 30;
+            polarisationCoeff   = (10.^(-polLoss/20))+repmat(sin(p0).*sin(p1),1,Nf);
             
             % Reflection adjusted for diff from perfect reflection.
             % Scattering becomes dominant when reflection is weak.
@@ -162,17 +155,16 @@ classdef GenericMaterial < Material
             
             % Big Circle Diff of Retransmitted path (#1) vs Perfect Reflection path
             D  = AngleDiff(CR,C1);
-            resP  = res.*sqrt(abs(cos(e0).*cos(e1))); % Projected atom size
-            Dt = resP.*(r0+r1)./(r0.*r1);
-            % %figure(99); hist([D,Dt]/pi*180,100);
-            D = max(0,D-Dt/2);
+            Dt = res.*(abs(cos(e0))./r0+abs(cos(e1))./r1); % Angle hysteresis (diff threshold)
+            Ds  = max(0,abs(D)-Dt);
             
             % Reflection
             if sys.forceNoReflection
                 reflectionCoeff = 0;
             else
-                %reflectionCoeff = repmat((max(0,cos(D(:))).^rExp),1,Nf).*10.^(-rLoss/20);
-                reflectionCoeff = repmat(D(:)==0,1,Nf).*repmat(10.^(-rLoss/20),Nr,1);
+                refen = (Ds(:)==0);
+                nref =  sum(refen);
+                reflectionCoeff = repmat(refen,1,Nf).*repmat(10.^(-rLoss/20),Nr,1);
             end
             
             % Scattering.
@@ -181,15 +173,15 @@ classdef GenericMaterial < Material
             else
                 scatteringCoeff = repmat(10.^(-sLoss/20),Nr,1);
             end
-            
-            
+                       
             % Empirical/adhoc Geometry normalisation / Calibration with "WallTest.m"
-            Offset = 14;
+            Offset = 18;
+            resP  = res.*sqrt(abs(cos(e0).*cos(e1))); % Projected atom size
             resPn = resP.*(r0+r1)./(r0.*r1); % Normalized atom size
             geometryCoeff = resPn*10^(Offset/20);
             
             % Scattering independent of polarisation?
-            y = penetrationCoeff.*polarisationCoeff.*(reflectionCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff);
+            y = penetrationCoeff.*(reflectionCoeff.*polarisationCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff);
             
         end
         
@@ -220,7 +212,7 @@ classdef GenericMaterial < Material
             Nf = numel(freqs);
             Nr = numel(c);
             
-            penetrationCoeff = sign(sin(a0).*sin(a1))<0&&~or(e0>(pi+c)/2,e1>(pi+c)/2);
+            penetrationCoeff = sign(sin(a0).*sin(a1))<0&~or(e0>(pi+c)/2,e1>(pi+c)/2);
             
             % Adjustment for diff from perfect(no) diffraction.
             % Projected atom area
@@ -241,13 +233,11 @@ classdef GenericMaterial < Material
             ad1 = abs(abs(a1)-Ad);
             at0 = min(pi/2,max(0,ad0-At));
             at1 = min(pi/2,max(0,ad1-At));
-            
-            
-            % Empirical/adhoc Geometry normalisation / Calibration with "CornerTest.m"
-            Offset = 40;
-            
+                       
+            % Empirical/adhoc. Calibration with "CornerTest.m"
             % Source: fig 6 in http://www.interdigital.com/research_papers/2014_02_18_60ghz_officebuilding_charac
-            dCdB = Offset*((repmat((1-sin(ed)).*(1-sin(at0)).*(1-sin(at1)),1,Nf)).^repmat(dExp,Nr,1)-1);
+            DiffractFloor = 40;
+            dCdB = DiffractFloor*((repmat((1-sin(ed)).*(1-sin(at0)).*(1-sin(at1)),1,Nf)).^repmat(dExp,Nr,1)-1);
             diffractCoeff = 10.^(dCdB/10);
             
             % Total diffracted signal...

@@ -1,8 +1,9 @@
 % Renders channel coefficients for given frequency bins and an endpoint pair.
 %
-% y = u.Channel(pov0,pov1,freqs,rain,bbtx)
+% y = u.Channel(pov0,pov1,freqs,times,rain,bb)
 % u is an handle to a Universe class (this class)
 % freqs:    Vector of frequencies [Hz]
+% times:    Vector of time samples [s]
 % rain:     Rain intensity [mm/h]
 % pov0:     Endpoint 0 (class PointOfView)
 % pov1:     Endpoint 1 (class PointOfView)
@@ -82,7 +83,7 @@ for pp0 = 1:pov0.antsys.n
             losRadius = norm(POV1-POV0);
             
             losMeta.P = -inf;
-            if LOS,
+            if LOS
                 
                 % Angle off DOV (Elevation vs NOV)
                 path01 = POV1-POV0;

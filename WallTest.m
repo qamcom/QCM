@@ -26,7 +26,7 @@ figure(100); clf;
 rng(1); % Random seed
 addpath(genpath('./'));
 
-Nit = 30;
+Nit = 10;
 RR  = [4 8 16];
 rr  = [1 2 4];
 
@@ -74,7 +74,7 @@ for ir = 1:numel(rr)
         PP=[];
         for it=1:Nit
             
-            
+            fprintf('.');
             
             
             % -------------------------------------------------------------------------
@@ -123,18 +123,14 @@ for ir = 1:numel(rr)
             % Setup with screen
             
             a1 = rand(1)*2*pi;
-            e1 = 8*pi/32;
+            e1 = 64*pi/256;
             A0 = 0;%[-pi/2:pi/10:pi/2];
             E0 = [0:pi/64:pi/2];
-            
-            
+                        
             % Start a universe
             universe  = Universe('Test');
             ground    = GroundStructure(WALLSIZE,WALLSIZE,resGround,matGround);
             universe.AddAtoms('Ground',ground);
-            
-            
-            
             
             clear x0;
             clear x1;
@@ -176,6 +172,8 @@ for ir = 1:numel(rr)
             
         end
         
+        fprintf('\n');
+
         PPP(ir,iR)=10*log10(mean(10.^((PP(:)-P0)/10)));
         figure(100);
         subplot(numel(rr),numel(RR),(ir-1)*numel(RR)+pp)
