@@ -10,29 +10,32 @@
 % -------------------------------------------------------------------------
 %     This is a part of the Qamcom Channel Model (QCM)
 %     Copyright (C) 2017  Björn Sihlbom, QAMCOM Research & Technology AB
-%     mailto:bjorn.sihlbom@qamcom.se, http://www.qamcom.se, https://github.com/qamcom/QCM 
-% 
+%     mailto:bjorn.sihlbom@qamcom.se, http://www.qamcom.se, https://github.com/qamcom/QCM
+%
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
 %     the Free Software Foundation, either version 3 of the License, or
 %     (at your option) any later version.
-% 
+%
 %     This program is distributed in the hope that it will be useful,
 %     but WITHOUT ANY WARRANTY; without even the implied warranty of
 %     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 %     GNU General Public License for more details.
-% 
+%
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
 function LOS = CheckLOS(u,POV0s,POV1s,inds0,inds1)
 
+
 N0  = size(POV0s,1);
 N1  = size(POV1s,1);
-LOS = ones(N0,N1);
+
+
 
 % All atoms
+LOS = ones(N0,N1);
 a=u.GetAtoms;
 
 if ~isempty(a.normal)
@@ -68,7 +71,7 @@ if ~isempty(a.normal)
                 center  = a.surface(LOSbox,:)-a.normal(LOSbox,:);
                 res     = a.res(LOSbox,:);
                 [dd,xx] = DistanceToLine(center,POV0,POV1);
-                d = min(dd(xx>sys.largeScaleResolution/2)./res(xx>sys.largeScaleResolution/2));
+                d = min(dd(xx>sys.largeScaleResolution/2)./res(xx>sys.largeScaleResolution/2))*2;
                 
                 LOS(n0,n1)=(isempty(d)||(d>=1));
             end
@@ -76,3 +79,5 @@ if ~isempty(a.normal)
         end
     end
 end
+
+

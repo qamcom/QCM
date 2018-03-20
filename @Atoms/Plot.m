@@ -69,7 +69,7 @@ posx = a.surface(ind,1)-a.normal(ind,1);
 posy = a.surface(ind,2)-a.normal(ind,2);
 posz = a.surface(ind,3)-a.normal(ind,3);
 res  = a.res(ind)/2;
-if nargin>1&&ischar(forceColor), forceColor=color2rgb(forceColor); end;
+if nargin>1&&ischar(forceColor), forceColor=color2rgb(forceColor); end
 for ii=1:N
     if nargin==1
         surf(xx*res(ii)+posx(ii),yy*res(ii)+posy(ii),zz*res(ii)+posz(ii),repmat(permute(color2rgb('g'),[1,3,2]),M,M),'FaceAlpha',FaceAlpha,'EdgeAlpha',EdgeAlpha);

@@ -64,7 +64,7 @@ if ~isempty(a.res)
     
     
     % Render Universe and POV for LOS
-    if exist('forceColor','var')&&~isempty(forceColor),
+    if exist('forceColor','var')&&~isempty(forceColor)
         a.Plot(forceColor);
     else
         a.Plot;

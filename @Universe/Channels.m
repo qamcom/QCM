@@ -35,7 +35,6 @@ function y=Channels(u,x0,x1,freqs,times,rain,bb)
 if ~exist('bb','var') || isempty(bb), bb=ones(1,numel(freqs)); end
 tic
 
-CC = 0; % Coeff counter
 
 % init y. Class?
 y.N0 = numel(x0);
@@ -58,9 +57,7 @@ y.times = times;
 verbose = (numel(x0)*numel(x1)>1);
 
 if verbose
-    msg = sprintf('Rendered 0/%d endpoint pairs. Remaining time = ??',y.N);
-    fprintf(msg);
-    rev = sprintf('%c',8*ones(1,length(msg)));
+    DispChannelProgress(y.N,0,0)
 end
 
 pp=0;
@@ -89,16 +86,11 @@ for endpoint0 = 1:y.N0
             y.endpoints(pp,:) = [endpoint0, endpoint1];
             
             % Get Channel
-            y.link{pp} = u.Channel(pov0,pov1,freqs,times,rain,bb);
-            CC = CC+numel(y.link{pp}.Hf);
+            [y.link{pp},cc] = u.Channel(pov0,pov1,freqs,times,rain,bb);
                 
         end
         if verbose
-            t=toc;
-            
-            msg = sprintf('Rendered %d/%d endpoint pairs @ %d kCoeff/sec. Passed=%dmin. Estd Total=%dmin. Estd Remaining=%dmin',pp,y.N,round(CC/t/1e3),round(t/60),round(t/pp*y.N/60),round(t/pp*(y.N-pp)/60));
-            fprintf([rev msg]);
-            rev = sprintf('%c',8*ones(1,length(msg)));
+            DispChannelProgress(y.N,pp,cc);
         end
     end
     

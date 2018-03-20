@@ -163,7 +163,7 @@ times = (0:1)*1e-6; % Steps [us]
 
 [sinr,snr,snr0,sinrPredict] = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
 
-% MU/SC data (Precoder and Equalizer to maximize concurrent links to all MS(x1))
+% Predicted MU/SC data (Precoder and Equalizer to maximize concurrent links to all MS(x1))
 predictedSINRmu_dB    = 10*log10(sinrPredict)
 predictedSEmu_bps2Hz  = log2(1+sinrPredict)
 
@@ -181,8 +181,8 @@ SE0_bps2Hz  = log2(1+snr0)
 
 %channelResponse = universe.Channels(x0,x1,freqs,times,rain);
 
-figure(20);
-universe.Response(x0,x1,freqs,rain);
+%figure(20);
+%universe.Response(x0,x1,freqs,rain);
 for ii=1:n
     figure(10+ii); 
     universe.Trace(x0{1},x1{ii},freqs,rain); 

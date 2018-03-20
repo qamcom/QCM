@@ -44,7 +44,7 @@ classdef GenericMaterial < Material
     % Abstract in parent class
     properties (SetAccess = private)
         tag     = 'Default';
-        color   = '1';
+        color   = 1;
         shading = 1;
     end
     
@@ -88,7 +88,7 @@ classdef GenericMaterial < Material
                         m.diffractionExponent =  1; % No dimension. Determines strengh outside perfect reflection
                         
                     otherwise
-                        error('Not supported.')
+                        warning('Not supported.')
                         
                 end
             end

@@ -77,7 +77,7 @@ if dp1,
         radius1,offElevation1,offAzimuth1,array1,rotation1);
 end
 
-if dp0 && dp1,
+if dp0 && dp1
     
     % Forth polarisation mode (add 90 degrees to both pov0 and pov1 polarisations)
     tmp = tmp0.*retransCoeff0p.*retransCoeff1p;
@@ -112,6 +112,7 @@ meta.P = 20*log10(rms(y(:)));
 
 % Collect metadata
 if ~isempty(ind)
+    meta.rays        = size(c,1);
     meta.sel         = ind;
     meta.NLOS        = stochasticCoeff(ind);
     meta.coeff       = c(ind,:,:);

@@ -29,18 +29,24 @@
 % -------------------------------------------------------------------------
 function y=BuildingStructure(corners,bh,res,matWall,matRoof)
 
-% Corners always defined clock wise!
-N = size(corners,1);    % Nrof corners
-n = 0;
+y = Atoms;
+
+
 
 CC=sqrt(3); % Atom overlap to avoid gaps
 
 % Adjust resolution to match building if required
+lenWall = vnorm(corners(:,:)-corners([end 1:end-1],:),2);
+corners(find(lenWall<1),:)=[];
 minWall = min(vnorm(corners(:,:)-corners([end 1:end-1],:),2));
-res = min([res,minWall/3,bh/3])*CC;
+maxWall = max(vnorm(corners(:,:)-corners([end 1:end-1],:),2));
+res = min([res,maxWall/10,minWall/4,bh/3])*CC;
 
 % Define 2D structure of walls
-for ii=0:N-1,
+% Corners always defined clock wise!
+n = 0;
+N = size(corners,1);    % Nrof corners
+for ii=0:N-1
     
     % Define corners in complex numbers
     corner1 = corners(mod(ii-1,N)+1,:)*[1;1j];
@@ -73,7 +79,10 @@ for ii=0:N-1,
     center2D(n+1,1)  = corner2+dd*exp(-1j*(alfa/2+pi/2))*res/sqrt(2);
     corner2D(n+1,1:2)  = [alfa 0]; % Corner!
     n=n+1;
-    assert(~sum(isnan(center2D(:)))>0,'Ploink...')
+    if sum(isnan(center2D(:)))>0
+        warning('Ploink...')        
+        return;
+    end
    
 end
 
@@ -110,7 +119,7 @@ if angle(corner2-corner1)>0 % Roof Box not empty
     dy = (imag(corner2-corner1)-res)/ny;
     [px,py]=meshgrid(res/2+(0:nx)*dx,res/2+(0:ny)*dy);
     center2Droof = corner1+px(:)+1j*py(:);
-    center2Droof(~InsidePolygon(center2Droof,center2D))=[]; % Remove pts outside Roof Box
+    center2Droof(~InsidePolygon(center2Droof,center2D))=[]; % Remove pts outside Roof Polygon
 end
 
 % Mount roof on top in 3D
@@ -123,7 +132,6 @@ material = [material; repmat(matRoof,n,1)];
 
 % Compose structure
 nAtom = size(center,1);
-y = Atoms;
 y.normal   = surface-center;
 y.surface  = surface;
 y.material = material;

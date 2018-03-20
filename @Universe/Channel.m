@@ -29,7 +29,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function y = Channel(u,pov0,pov1,freqs,times,rain,bb)
+function [y,cc] = Channel(u,pov0,pov1,freqs,times,rain,bb)
 
 if ~exist('bb','var') || isempty(bb), bb=ones(1,numel(freqs)); end
 
@@ -199,8 +199,6 @@ for pp0 = 1:pov0.antsys.n
             radius1  = vnorm(path1,2);
             sel0     = find(radius0<sys.secondOrderRange);
             sel1     = find(radius1<sys.secondOrderRange);
-            sel0(sys.secondOrderPaths:end)=[];
-            sel1(sys.secondOrderPaths:end)=[];
             N0       = numel(sel0);
             N1       = numel(sel1);
             
@@ -246,7 +244,7 @@ for pp0 = 1:pov0.antsys.n
                 
                 % See if any LOS btw 1st bounce from both ends (=> 2 bounce paths)
                 if sys.enableN2LOS
-                    LOS = u.CheckLOS(a0.surface,a1.surface,indLOS00(sel0),indLOS11(sel1));
+                    LOS = u.FindNLOS(a0.surface,a1.surface);
                 else
                     LOS = zeros(numel(sel0),numel(sel1));
                 end
@@ -257,7 +255,7 @@ for pp0 = 1:pov0.antsys.n
                     path01  = zeros(N,3);
                     inds0   = zeros(N,1);
                     inds1   = zeros(N,1);
-                    speed01 = zeros(N);
+                    speed01 = zeros(N,1);
                     for ii=1:N
                         [ind0,ind1]  = ind2sub(size(LOS),inds01(ii));
                         inds0(ii)    = ind0;
@@ -386,6 +384,8 @@ for pp0 = 1:pov0.antsys.n
     end
     
 end
+
+cc = numel(Hf);
 
 y.tag       = sprintf('%s-%s',pov0.tag,pov1.tag);
 y.pov0      = pov0;

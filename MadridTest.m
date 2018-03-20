@@ -1,6 +1,6 @@
 rng(2);
 
-scenario = 1;
+scenario = 2; % 1 or 2
 
 
 % METIS Madrid Grid
@@ -87,7 +87,7 @@ switch scenario
         dualpol  = 1;     % 1 == Also analyze perpendicular polarisation mode
         ueElement  = Element('isotropic');
         ueAnt      = Array('UE',[0 0],ueElement,pol);
-        ueAntsys   = ArrayGroup('UE',{ueAnt ueAnt},[0 0 0;0 1 0],[0 0],[0 0],[0 0],dualpol);
+        ueAntsys   = AntennaSystem('UE',{ueAnt ueAnt},[0 0 0;0 1 0],[0 0],[0 0],[0 0],dualpol);
         
         dd=50;
         n=0;
@@ -118,7 +118,7 @@ switch scenario
         UNdPos = (inds'-1)*dd;
         
         % Define BTS positions
-        la = [120  340 51];
+        la = [131  340 51];
         btsAntsys = DistArray(mean(freq),30); % QuadArray(mean(freq),30);
         
         bb=[];%zeros(1,numel(freq)); bb(round(numel(freq)/2))=1;
@@ -130,10 +130,10 @@ switch scenario
         dualpol  = 0;     % 1 == Also analyze perpendicular polarisation mode
         ueElement  = Element('isotropic');
         ueAnt      = Array('UE',[0 0],ueElement,pol);
-        ueAntsys   = ArrayGroup('UE',{ueAnt},[0 0 0],[0],[0],[0],dualpol);
+        ueAntsys   = AntennaSystem('UE',{ueAnt},[0 0 0],[0],[0],[0],dualpol);
         
         % Define UE positions
-        nUNd = 1000;
+        nUNd = 10000;
         UNdPos = [linspace(9,387,nUNd).' 276*ones(nUNd,1) 10*ones(nUNd,1)];
         
         inds = 1:nUNd;
@@ -154,10 +154,10 @@ end
 
 % PointOfView(tag,position,elevation,azimuth,agroup)
 x1{1} = PointOfView('BTS',btsAntsys,la,0,0);
-figure(3);
-u.Plot(x0,x1);
-axis equal;
-pause(0.1)
+% figure(3);
+% u.Plot(x0,x1);
+% axis equal;
+% pause(0.1)
 
 figure(11);
 u.PlotLOS(x0{1}.position,x1{1}.position);
@@ -165,16 +165,17 @@ u.PlotLOS(x0{1}.position,x1{1}.position);
 
 
 rain  = 0; % mm/h
+times = 0;
 
-itmode =0;
+itmode =1;
 tic
 if itmode==0
     
     % Batch calculation
-    channelResponse = u.Channels(x0,x1,freq,rain,bb);
+    channelResponse = u.Channels(x0,x1,freq,times,rain,bb);
     
-    N0 = channelResponse.link{1}.pov0.agroup.n;
-    N1 = channelResponse.link{1}.pov1.agroup.n;
+    N0 = channelResponse.link{1}.pov0.antsys.n;
+    N1 = channelResponse.link{1}.pov1.antsys.n;
     P  = nan(numel(inds),1);
     PP = nan(numel(inds),4,N0,N1);
     PPe0 = nan(numel(inds),1);
@@ -183,19 +184,20 @@ if itmode==0
     PPa = nan(numel(inds),1);
     
     for n=1:numel(inds)
+        link = channelResponse.link{n};
         ind = inds(n);
         P(n) = channelResponse.link{n}.P;
         for n0=1:N0
             for n1=1:N1
-                PP(n,1,n0,n1) = channelResponse.link{n}.los{n0,n1}.P;
-                PP(n,2,n0,n1) = channelResponse.link{n}.nlos{n0,n1}.P;
-                PPe0(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff0;
-                PPe1(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff1;
-                PPd(n,1,n0,n1)  = link.nlos{n0,n1}.distanceCoeff;
-                PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
+                PP(n,1,n0,n1) = link.los{n0,n1}.P;
+                PP(n,2,n0,n1) = link.nlos{n0,n1}.P;
+%                 PPe0(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff0;
+%                 PPe1(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff1;
+%                 PPd(n,1,n0,n1)  = link.nlos{n0,n1}.distanceCoeff;
+%                 PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
 
-                PP(n,3,n0,n1) = channelResponse.link{n}.n2los{n0,n1}.P;
-                PP(n,4,n0,n1) = channelResponse.link{n}.n3los{n0,n1}.P;
+                PP(n,3,n0,n1) = link.n2los{n0,n1}.P;
+                PP(n,4,n0,n1) = link.n3los{n0,n1}.P;
             end
         end
     end
@@ -210,24 +212,27 @@ else
     PPd = nan(numel(inds),1);
     PPa = nan(numel(inds),1);
     
-    for n=1:numel(inds)
-        n
+    N = numel(inds);
+    DispChannelProgress(N,0,0)
+    for n=1:N
+        
         ind = inds(n);
         
         % Single link calculation
-        link = u.Channel(x0{n},x1{1},freq,rain);
-        
-        N0 = link.pov0.agroup.n;
-        N1 = link.pov1.agroup.n;
+        [link,cc] = u.Channel(x0{n},x1{1},freq,times,rain);
+        DispChannelProgress(N,n,cc);
+
+        N0 = link.pov0.antsys.n;
+        N1 = link.pov1.antsys.n;
         for n0=1:N0
             for n1=1:N1
                 PP(n,1,n0,n1) = link.los{n0,n1}.P;
                 
                 PP(n,2,n0,n1) = link.nlos{n0,n1}.P;
-                PPe0(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff0;
-                PPe1(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff1;
-                PPd(n,1,n0,n1)  = link.nlos{n0,n1}.distanceCoeff;
-                PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
+%                 PPe0(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff0;
+%                 PPe1(n,1,n0,n1) = link.nlos{n0,n1}.elemCoeff1;
+%                 PPd(n,1,n0,n1)  = link.nlos{n0,n1}.distanceCoeff;
+%                 PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
                 
                 PP(n,3,n0,n1) = link.n2los{n0,n1}.P;
                 PP(n,4,n0,n1) = link.n3los{n0,n1}.P;
@@ -243,21 +248,21 @@ end
 toc
 
 figure(1); clf;
-plot(UNdPos(inds,1),P(:,1),'g','LineWidth',4);
+plot(UNdPos(inds,1),P(:,1),'b','LineWidth',4);
 hold on;
-plot(UNdPos(inds,1),PP(:,1,1),'b');
-plot(UNdPos(inds,1),PP(:,2,1),'r');
-plot(UNdPos(inds,1),PP(:,3,1),'y');
-plot(UNdPos(inds,1),PP(:,4,1),'m');
+plot(UNdPos(inds,1),PP(:,1,1),'r','LineWidth',4);
+plot(UNdPos(inds,1),PP(:,2,1),'m');
+plot(UNdPos(inds,1),PP(:,3,1),'g');
+plot(UNdPos(inds,1),PP(:,4,1),'c');
+plot(UNdPos(inds,1),squeeze(PP(:,1,:)),'r:');
+plot(UNdPos(inds,1),squeeze(PP(:,2,:)),'m:');
+plot(UNdPos(inds,1),squeeze(PP(:,3,:)),'g:');
+plot(UNdPos(inds,1),squeeze(PP(:,4,:)),'c:');
+%plot(UNdPos(inds,1),squeeze(PPe0(:,1,:)),'k:');
+%plot(UNdPos(inds,1),squeeze(PPe1(:,1,:)),'k:');
+%plot(UNdPos(inds,1),squeeze(PPd(:,1,1)),'k:'); 
+%plot(UNdPos(inds,1),squeeze(PPa(:,1,:)),'k:');
 legend({'RMS','los','nlos','n2los','n3los'})
-plot(UNdPos(inds,1),squeeze(PP(:,1,:)),'b');
-plot(UNdPos(inds,1),squeeze(PP(:,2,:)),'r');
-plot(UNdPos(inds,1),squeeze(PP(:,3,:)),'y');
-plot(UNdPos(inds,1),squeeze(PP(:,4,:)),'m');
-plot(UNdPos(inds,1),squeeze(PPe0(:,1,:)),'k');
-plot(UNdPos(inds,1),squeeze(PPe1(:,1,:)),'k');
-plot(UNdPos(inds,1),squeeze(PPd(:,1,:)),'k');
-plot(UNdPos(inds,1),squeeze(PPa(:,1,:)),'k');
 xlabel('UNdPos [m]');
 ylabel('RMS Path Loss incl antennas [dB]');
 grid on;
@@ -268,10 +273,10 @@ if 0%scenario==1
     for n=1:numel(inds)
         ind = inds(n);
         figure
-        u.Trace(x0{n},x1{1},freq,rain);
+        u.Trace(x0{n},x1{1},freq,times,rain);
     end
     figure
-    u.Response(x1,x0,freq,rain);
+    u.Response(x1,x0,freq,times,rain);
 end
 
 

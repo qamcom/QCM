@@ -114,6 +114,7 @@ meta.P = 20*log10(rms(y(:)));
 
 % Collect metadata
 if ~isempty(ind)
+    meta.rays        = size(c,1);
     meta.sel         = ind;
     meta.coeff       = c(ind,:,:);
     meta.radius      = radius0(ind)+radius1(ind);

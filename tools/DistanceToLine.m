@@ -3,10 +3,10 @@
 % [d,t] = DistanceToLine(x,p0,p1)
 %
 % x0:       Points in 3D [x,y,z]
-% x1,x2:    Line definition (2 points)
+% p0,p1:    Line definition (2 points)
 %
 % d:        Perpendicular distance to line
-% t:        Where on line. x0 = x1+t*(x2-x1)
+% t:        Where on line. x0 = p0+t*(p1-p0)
 %
 % http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
 %
@@ -29,12 +29,12 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [d,t]=DistanceToLine(x0,x1,x2)
+function [d,t]=DistanceToLine(x0,p0,p1)
 
-N=max([size(x0,1),size(x1,1),size(x2,1)]);
+N=max([size(x0,1),size(p0,1),size(p1,1)]);
 
-x12   = VectorAdd(x2,-x1);
-x01   = VectorAdd(x1,-x0);
+x12   = VectorAdd(p1,-p0);
+x01   = VectorAdd(p0,-x0);
 d12   = vnorm(x12,2);
 
 if size(x01,1)==1, x01=repmat(x01,N,1); end
@@ -44,4 +44,4 @@ d = CrossMag(x12,x01)./d12;
 t = -sum(x01.*x12,2)./d12;
 
 % t measured from closest endpoint
-t(t>d12/2) = d12-t(t>d12/2);
+%t(t>d12/2) = d12-t(t>d12/2);
