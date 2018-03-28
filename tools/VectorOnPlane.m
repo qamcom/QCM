@@ -4,6 +4,7 @@
 % y = VectorOnPlane(x,n)
 % x:    3D vectors to project on plane. One end in origo
 % n:    Normal of plane
+% y:    3D vectors. Projected to be // to plane
 %
 % http://math.stackexchange.com/questions/633181/formula-to-project-a-vector-onto-a-plane
 %

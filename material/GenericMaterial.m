@@ -87,6 +87,17 @@ classdef GenericMaterial < Material
                         m.reflectionLoss      = 3;  % dB
                         m.diffractionExponent =  1; % No dimension. Determines strengh outside perfect reflection
                         
+                    case 'Meatbag'
+                        m.color             = 4;
+                        m.tag               = 'Meatbag';
+                        m.freqs               = 60e9;   % Frequency vector. Scalar of any value if frequency invariant.
+                        
+                        % Values below vectors of same size as freqs
+                        m.penetrationLoss     = 30; % dB
+                        m.scatteringLoss      = 70; % dB
+                        m.reflectionLoss      = 50;  % dB
+                        m.diffractionExponent =  5; % set to match Characterization of 60 GHz Shadowing by Human Bodies and Simple Phantoms Lund
+
                     otherwise
                         warning('Not supported.')
                         

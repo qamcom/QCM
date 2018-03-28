@@ -34,12 +34,12 @@ function y=Channels(u,x0,x1,freqs,times,rain,bb)
 
 if ~exist('bb','var') || isempty(bb), bb=ones(1,numel(freqs)); end
 tic
-
+CC=0;
 
 % init y. Class?
 y.N0 = numel(x0);
 y.universe = u;
-if ~isempty(x1),
+if ~isempty(x1)
 %    y = ChannelResponse(freqs,rain,u,x0);
     y.N1 = numel(x1);
     y.N = y.N0*y.N1;
@@ -90,6 +90,7 @@ for endpoint0 = 1:y.N0
                 
         end
         if verbose
+            CC = CC+cc;
             DispChannelProgress(y.N,pp,cc);
         end
     end

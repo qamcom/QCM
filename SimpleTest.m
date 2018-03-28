@@ -57,14 +57,16 @@ matFoliage  = ScatteringMaterial('Foliage',10,1);
 
 % -------------------------------------------------------------------------
 % Start a universe
-
+ 
+rot = 0;
+pos = [0 0 0];
 universe  = Universe('Test');
-ground    = GroundStructure(R(1),R(2),resGround,matGround);
-universe.AddAtoms('Ground',ground);
+structure = GroundStructure(R(1),R(2),matGround);
+tag = 'Ground';
+universe.AddStructure(tag,structure,resGround);
 
 
 % Define var's for point-ov-view:s
-ii=1;
 dovN  = 90;  %[ 0, 1, 0];  % Direction-of-view vector N
 dovE  = 0;   %[ 1, 0, 0];  % Direction-of-view vector E
 dovS  = -90; %[ 0,-1, 0];  % Direction-of-view vector S
@@ -107,8 +109,11 @@ for ny=-(Ny-1)/2:(Ny-1)/2
         corners  = [bx/2*[-1 -1 1 1]' by/2*[-1 1 1 -1]'];
         pos      = [R(1)/2+nx*bx*2 R(2)/2+ny*by*2 b0];
         rot      = 0;
-        building = BuildingStructure(corners,bh(n),resHouse,matWall,matRoof);
-        universe.AddAtoms(sprintf('Building%d',n),building,pos,rot);
+        structure = BuildingStructure(corners,bh(n),matWall,matRoof);
+        tag = sprintf('Building%d',n);
+        universe.AddStructure(tag,structure,resHouse,pos,rot);
+
+        
         %end
     end
 end
@@ -129,6 +134,7 @@ x0=cell(0);
 x1=cell(0);
 
 
+%universe.Nudge;
 
 % x = PointOfView(tag,agroup,position,elevation,azimuth,velocity)
 

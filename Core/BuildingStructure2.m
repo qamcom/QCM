@@ -1,14 +1,13 @@
-% Define atoms for a simple building structure
+% Define  simple building structure
 %
-% y = BuildingdStructure2(corners,bh,res,matWall,matRoof)
+% y = BuildingdStructure2(corners,bh,matWall,matRoof)
 % bw:       Building width (short wall N/S direction) [m]
 % bd:       Building depth (long wall E/W direction) [m]
 % bh:       Building body height upto roof [m]
 % rh:       Building roof height (total height = bh+rh) [m]
-% res:      Ground tile size / resolution [m]
 % matWall:  Classdef Material handle. For wall atoms
 % matRoof:  Classdef Material handle. For roof atoms
-% y:        classdef Atoms instance
+% y:        classdef Structure instance
 %
 %
 % -------------------------------------------------------------------------
@@ -29,191 +28,254 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
-function y=BuildingStructure2(bw,bd,bh,rh,res,matWall,matRoof)
+function s=BuildingStructure2(bw,bd,bh,rh,matWall,matRoof)
 
-y = Atoms;
-CC=sqrt(2);
+% Defining points
+p = [0 0  0; 0 bw  0; bd bw  0; bd 0  0;...
+     0 0 bh; 0 bw bh; bd bw bh; bd 0 bh;...
+      0 bw/2 bh+rh;...
+     bd bw/2 bh+rh];
+ 
+% Surfaces
+s{1}.pi = [1 5    8 4]; % S wall
+s{1}.material = matWall;
+s{2}.pi = [1 5  9 6 2]; % W wall
+s{2}.material = matWall;
+s{3}.pi = [3 7    6 2]; % N wall
+s{3}.material = matWall;
+s{4}.pi = [3 7 10 8 4]; % E wall
+s{4}.material = matWall;
+s{5}.pi = [5 9 10 8]; % S roof
+s{5}.material = matWall;
+s{6}.pi = [6 9 10 7]; % N roof
+s{6}.material = matWall;
 
-% 2 // N-S walls incl roof triangles
-resxx = min([bh/2,rh/2,bw/2,res]);
-nw = max(0,ceil((bw   -resxx)/resxx*CC))+1;
-nh = max(0,ceil((bh+rh-resxx)/resxx*CC))+1;
-dw = ((bw   -resxx))/(nw-1);
-dh = ((bh+rh-resxx))/(nh-1);
-xx = -bw/2+ resxx/2 + (0:(nw-1))*dw;
-zz =        resxx/2 + (0:(nh-1))*dh;
+% Corners
 
-[xx,zz]=meshgrid(xx,zz); MM=2.1;
-wallpoly = [-bw/2+resxx/MM,0; -bw/2+resxx/MM,bh; 0,bh+rh-resxx/MM; bw/2-resxx/MM,bh; bw/2-resxx/MM,0;-bw/2+resxx/MM,0];
-inside = InsidePolygon([xx(:),zz(:)],wallpoly);
-xx=xx(inside);
-zz=zz(inside);
-Nxx = numel(xx);
+% Around S wall
+c{1}.pi = [1 5];
+c{1}.si = [1 2];
+c{1}.material = matWall;
+c{2}.pi = [5 8];
+c{2}.si = [1 3];
+c{2}.material = matRoof; % Wall/Roof corner
+c{3}.pi = [8 4];
+c{3}.si = [1 4];
+c{3}.material = matWall;
 
-y.surface = [xx(:), bd/2*ones(Nxx,1),zz(:)];
-y.normal  = repmat([0 1 0]*resxx/2,Nxx,1);
+% Around N wall
+c{4}.pi = [2 6];
+c{4}.si = [2 3];
+c{4}.material = matWall;
+c{5}.pi = [6 7];
+c{5}.si = [3 6];
+c{5}.material = matRoof; % Wall/Roof corner
+c{6}.pi = [3 7];
+c{6}.si = [3 4];
+c{6}.material = matWall;
 
-y.surface = [y.surface;[xx(:),-bd/2*ones(Nxx,1),zz(:)]];
-y.normal  = [y.normal; repmat([0 -1 0]*resxx/2,Nxx,1)];
+% Roof
+c{7}.pi = [5 9];
+c{7}.si = [2 5];
+c{7}.material = matRoof;
+c{8}.pi = [9 6];
+c{8}.si = [2 6];
+c{8}.material = matRoof;
+c{9}.pi = [9 10];
+c{9}.si = [5 6];
+c{9}.material = matRoof;
+c{10}.pi = [8 10];
+c{10}.si = [4 5];
+c{10}.material = matRoof;
+c{11}.pi = [10 7];
+c{11}.si = [4 6];
+c{1}.material = matRoof;
 
-y.res     = [y.res;    resxx*ones(Nxx*2,1)];
-y.corner  = [y.corner; zeros(Nxx*2,2)];
-y.material= [y.material; repmat(matWall,Nxx*2,1)];
+s = Structure(p,s,c,[]);
 
-% 2 // E-W walls
-resyy = min([bh/2,bd/2,res]);
-nd = max(0,ceil((bd-resyy)/resyy*CC))+1;
-nh = max(0,ceil((bh-resyy)/resyy*CC))+1;
-dd = ((bd-resyy))/(nd-1);
-dh = ((bh-resyy))/(nh-1);
-yy = -bd/2+ resyy/2 + (0:(nd-1))*dd;
-zz =        resyy/2 + (0:(nh-1))*dh;
-
-[yy,zz]=meshgrid(yy,zz);
-Nyy = numel(yy);
-y.surface = [y.surface;[ bw/2*ones(Nyy,1),yy(:), zz(:)]];
-y.normal  = [y.normal; repmat([ 1 0 0]*resyy/2,Nyy,1)];
-y.surface = [y.surface;[-bw/2*ones(Nyy,1),yy(:), zz(:)]];
-y.normal  = [y.normal; repmat([-1 0 0]*resyy/2,Nyy,1)];
-y.res     = [y.res;    resyy*ones(Nyy*2,1)];
-y.corner  = [y.corner; zeros(Nyy*2,2)];
-y.material= [y.material; repmat(matWall,Nyy*2,1)];
-
-
-
-% Vertical corners
-reszz = min([bh/2,res]);
-nh = ceil(bh/reszz);
-zz = reszz/2+(0:(nh-1))*(bh-reszz)/(nh-1);
-% NE corner
-y.surface = [y.surface;[ bw/2*ones(nh,1),bd/2*ones(nh,1), zz(:)]];
-y.normal  = [y.normal;repmat([ 1 1 0]/sqrt(2)*reszz/2,nh,1)];
-% SE corner
-y.surface = [y.surface;[ bw/2*ones(nh,1),-bd/2*ones(nh,1), zz(:)]];
-y.normal  = [y.normal;repmat([ 1 -1 0]/sqrt(2)*reszz/2,nh,1)];
-% SW corner
-y.surface = [y.surface;[-bw/2*ones(nh,1),-bd/2*ones(nh,1), zz(:)]];
-y.normal  = [y.normal;repmat([-1 -1 0]/sqrt(2)*reszz/2,nh,1)];
-% NW corner
-y.surface = [y.surface;[-bw/2*ones(nh,1), bd/2*ones(nh,1), zz(:)]];
-y.normal  = [y.normal;repmat([-1  1 0]/sqrt(2)*reszz/2,nh,1)];
-
-y.res     = [y.res;    reszz*ones(nh*4,1)];
-y.corner  = [y.corner; repmat([pi/2,0],4*nh,1)];
-y.material= [y.material; repmat(matWall,nh*4,1)];
-
-% Slanted roof E&W
-rs = hypot(bw/2,rh);
-an = angle(complex(rh,bw/2));
-resss = min([rs/2,bd/2,res]);
-nd = ceil(bd/resss*CC);
-ns = ceil(rs/resss*CC);
-rr = (resss/2+(0:(ns-1))*(rs-resss)/(ns-1));
-xx = rr(end:-1:1)*sin(an);
-zz = rr*cos(an);
-yy = -bd/2+resss/2+(0:(nd-1))*(bd-resss)/(nd-1);
-[xx,yy]=meshgrid(xx,yy);
-zz = repmat(zz,nd,1);
-Nss = numel(xx);
-
-% E side
-nnE = [rh,0,bw/2]; nnE=nnE/norm(nnE)*resss/2;
-y.surface = [y.surface;[xx(:),yy(:),bh+zz(:)]];
-y.normal  = [y.normal; repmat(nnE,Nss,1)];
-
-% W side
-nnW = [-rh,0,bw/2]; nnW=nnW/norm(nnW)*resss/2;
-y.surface = [y.surface;[-xx(:),yy(:),bh+zz(:)]];
-y.normal  = [y.normal; repmat(nnW,Nss,1)];
-
-y.res     = [y.res;    resss*ones(Nss*2,1)];
-y.corner  = [y.corner; zeros(Nss*2,2)];
-y.material= [y.material; repmat(matRoof,Nss*2,1)];
-
-
-% Corners vs slanted roof
-resyy = min([bd/2,res]);
-ny = ceil(bd/resyy);
-yy = -bd/2+resyy/2+(0:(ny-1))*(bd-resyy)/(ny-1);
-an = angle(complex(rh,bw/2));
-% E side
-nnE = [-cos(an/2),0,sin(an/2)]*resyy/2;
-y.surface = [y.surface;[-bw/2*ones(ny,1),yy(:),bh*ones(ny,1)]];
-y.normal  = [y.normal; repmat(nnE,ny,1)];
-nnW = [ cos(an/2),0,sin(an/2)]*resyy/2;
-y.surface = [y.surface;[ bw/2*ones(ny,1),yy(:),bh*ones(ny,1)]];
-y.normal  = [y.normal; repmat(nnW,ny,1)];
-y.res     = [y.res;    resyy*ones(ny*2,1)];
-y.corner  = [y.corner; repmat([an,pi/2],ny*2,1)];
-y.material= [y.material; repmat(matRoof,ny*2,1)];
-
-% Roof triangle corners
-rs = hypot(rh,bw/2);
-an = angle(complex(rh,bw/2));
-resxx = min([rs/2,res]);
-nx = ceil(rs/resxx);
-rr = resxx/2+(0:(nx-1))*(rs-resxx)/(nx-1);
-xx = rr(end:-1:1)*sin(an);
-zz = bh+rr*cos(an);
-nnE = [ cos(an),0,sin(an)]*resxx/2;
-ccE = [-sin(an),0,cos(an)];
-nnSE = RotateAroundAxis(nnE,ccE,-pi/4);
-nnNE = RotateAroundAxis(nnE,ccE, pi/4);
-ccW = [ sin(an),0,cos(an)];
-nnW = [-cos(an),0,sin(an)]*resxx/2;
-nnSW = RotateAroundAxis(nnW,ccW, pi/4);
-nnNW = RotateAroundAxis(nnW,ccW,-pi/4);
-
-% S/W side
-y.surface = [y.surface;[-xx(:),-bd/2*ones(nx,1),zz(:)]];
-y.normal  = [y.normal; repmat(nnSW,nx,1)];
-ac = Line2Corner(ccW,nnSW);
-y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
-% N/W side
-y.surface = [y.surface;[-xx(:),bd/2*ones(nx,1),zz(:)]];
-y.normal  = [y.normal; repmat(nnNW,nx,1)];
-ac = Line2Corner(ccW,nnNW);
-y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
-% S/E side
-y.surface = [y.surface;[xx(:),-bd/2*ones(nx,1),zz(:)]];
-y.normal  = [y.normal; repmat(nnSE,nx,1)];
-ac = Line2Corner(ccE,nnSE);
-y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
-% N/E side
-y.surface = [y.surface;[xx(:),bd/2*ones(nx,1),zz(:)]];
-y.normal  = [y.normal; repmat(nnNE,nx,1)];
-ac = Line2Corner(ccE,nnNE);
-y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
-y.res     = [y.res;    resxx*ones(nx*4,1)];
-y.material= [y.material; repmat(matRoof,nx*4,1)];
-
-% Top corner
-resyy = min([bd/2,res]);
-ny = ceil(bd/resyy);
-an = atan(rh/(bw/2));
-cc = [1 0 0];
-nn = [1e-10 0 1]*resyy/2;
-ac = Line2Corner(cc,nn);
-yy = -bd/2+resyy/2+(0:(ny-1))*(bd-resyy)/(ny-1);
-y.surface = [y.surface;  [zeros(ny,1),yy(:),(bh+rh)*ones(ny,1)]];
-y.normal  = [y.normal;   repmat(nn,ny,1)];
-y.res     = [y.res;      resyy*ones(ny,1)];
-y.corner  = [y.corner;   repmat([2*an,ac+pi/2],ny,1)];
-y.material= [y.material; repmat(matRoof,ny,1)];
-
-
-% figure(1), clf;
-% hold on;
-% ind = find(y.corner(:,1)==0);
-% for ii=ind(:)'
-%     plot3(y.surface(ii,1),y.surface(ii,2),y.surface(ii,3),'r*')
-%     plot3(y.surface(ii,1)+[0,y.normal(ii,1)],y.surface(ii,2)+[0,y.normal(ii,2)],y.surface(ii,3)+[0,y.normal(ii,3)],'r.:')
-% end
-% ind = find(y.corner(:,1)~=0);
-% for ii=ind(:)'
-%     plot3(y.surface(ii,1),y.surface(ii,2),y.surface(ii,3),'g*')
-%     plot3(y.surface(ii,1)+[0,y.normal(ii,1)],y.surface(ii,2)+[0,y.normal(ii,2)],y.surface(ii,3)+[0,y.normal(ii,3)],'g.:')
-% end
-% xlabel('X'); ylabel('Y'), zlabel('Z');
-% axis equal
-% pause(0);
+% y = Atoms;
+% CC=sqrt(2);
+% 
+% % 2 // N-S walls incl roof triangles
+% resxx = min([bh/2,rh/2,bw/2,res]);
+% nw = max(0,ceil((bw   -resxx)/resxx*CC))+1;
+% nh = max(0,ceil((bh+rh-resxx)/resxx*CC))+1;
+% dw = ((bw   -resxx))/(nw-1);
+% dh = ((bh+rh-resxx))/(nh-1);
+% xx = -bw/2+ resxx/2 + (0:(nw-1))*dw;
+% zz =        resxx/2 + (0:(nh-1))*dh;
+% 
+% [xx,zz]=meshgrid(xx,zz); MM=2.1;
+% wallpoly = [-bw/2+resxx/MM,0; -bw/2+resxx/MM,bh; 0,bh+rh-resxx/MM; bw/2-resxx/MM,bh; bw/2-resxx/MM,0;-bw/2+resxx/MM,0];
+% inside = InsidePolygon([xx(:),zz(:)],wallpoly);
+% xx=xx(inside);
+% zz=zz(inside);
+% Nxx = numel(xx);
+% 
+% y.surface = [xx(:), bd/2*ones(Nxx,1),zz(:)];
+% y.normal  = repmat([0 1 0]*resxx/2,Nxx,1);
+% 
+% y.surface = [y.surface;[xx(:),-bd/2*ones(Nxx,1),zz(:)]];
+% y.normal  = [y.normal; repmat([0 -1 0]*resxx/2,Nxx,1)];
+% 
+% y.res     = [y.res;    resxx*ones(Nxx*2,1)];
+% y.corner  = [y.corner; zeros(Nxx*2,2)];
+% y.material= [y.material; repmat(matWall,Nxx*2,1)];
+% 
+% % 2 // E-W walls
+% resyy = min([bh/2,bd/2,res]);
+% nd = max(0,ceil((bd-resyy)/resyy*CC))+1;
+% nh = max(0,ceil((bh-resyy)/resyy*CC))+1;
+% dd = ((bd-resyy))/(nd-1);
+% dh = ((bh-resyy))/(nh-1);
+% yy = -bd/2+ resyy/2 + (0:(nd-1))*dd;
+% zz =        resyy/2 + (0:(nh-1))*dh;
+% 
+% [yy,zz]=meshgrid(yy,zz);
+% Nyy = numel(yy);
+% y.surface = [y.surface;[ bw/2*ones(Nyy,1),yy(:), zz(:)]];
+% y.normal  = [y.normal; repmat([ 1 0 0]*resyy/2,Nyy,1)];
+% y.surface = [y.surface;[-bw/2*ones(Nyy,1),yy(:), zz(:)]];
+% y.normal  = [y.normal; repmat([-1 0 0]*resyy/2,Nyy,1)];
+% y.res     = [y.res;    resyy*ones(Nyy*2,1)];
+% y.corner  = [y.corner; zeros(Nyy*2,2)];
+% y.material= [y.material; repmat(matWall,Nyy*2,1)];
+% 
+% 
+% 
+% % Vertical corners
+% reszz = min([bh/2,res]);
+% nh = ceil(bh/reszz);
+% zz = reszz/2+(0:(nh-1))*(bh-reszz)/(nh-1);
+% % NE corner
+% y.surface = [y.surface;[ bw/2*ones(nh,1),bd/2*ones(nh,1), zz(:)]];
+% y.normal  = [y.normal;repmat([ 1 1 0]/sqrt(2)*reszz/2,nh,1)];
+% % SE corner
+% y.surface = [y.surface;[ bw/2*ones(nh,1),-bd/2*ones(nh,1), zz(:)]];
+% y.normal  = [y.normal;repmat([ 1 -1 0]/sqrt(2)*reszz/2,nh,1)];
+% % SW corner
+% y.surface = [y.surface;[-bw/2*ones(nh,1),-bd/2*ones(nh,1), zz(:)]];
+% y.normal  = [y.normal;repmat([-1 -1 0]/sqrt(2)*reszz/2,nh,1)];
+% % NW corner
+% y.surface = [y.surface;[-bw/2*ones(nh,1), bd/2*ones(nh,1), zz(:)]];
+% y.normal  = [y.normal;repmat([-1  1 0]/sqrt(2)*reszz/2,nh,1)];
+% 
+% y.res     = [y.res;    reszz*ones(nh*4,1)];
+% y.corner  = [y.corner; repmat([pi/2,0],4*nh,1)];
+% y.material= [y.material; repmat(matWall,nh*4,1)];
+% 
+% % Slanted roof E&W
+% rs = hypot(bw/2,rh);
+% an = angle(complex(rh,bw/2));
+% resss = min([rs/2,bd/2,res]);
+% nd = ceil(bd/resss*CC);
+% ns = ceil(rs/resss*CC);
+% rr = (resss/2+(0:(ns-1))*(rs-resss)/(ns-1));
+% xx = rr(end:-1:1)*sin(an);
+% zz = rr*cos(an);
+% yy = -bd/2+resss/2+(0:(nd-1))*(bd-resss)/(nd-1);
+% [xx,yy]=meshgrid(xx,yy);
+% zz = repmat(zz,nd,1);
+% Nss = numel(xx);
+% 
+% % E side
+% nnE = [rh,0,bw/2]; nnE=nnE/norm(nnE)*resss/2;
+% y.surface = [y.surface;[xx(:),yy(:),bh+zz(:)]];
+% y.normal  = [y.normal; repmat(nnE,Nss,1)];
+% 
+% % W side
+% nnW = [-rh,0,bw/2]; nnW=nnW/norm(nnW)*resss/2;
+% y.surface = [y.surface;[-xx(:),yy(:),bh+zz(:)]];
+% y.normal  = [y.normal; repmat(nnW,Nss,1)];
+% 
+% y.res     = [y.res;    resss*ones(Nss*2,1)];
+% y.corner  = [y.corner; zeros(Nss*2,2)];
+% y.material= [y.material; repmat(matRoof,Nss*2,1)];
+% 
+% 
+% % Corners vs slanted roof
+% resyy = min([bd/2,res]);
+% ny = ceil(bd/resyy);
+% yy = -bd/2+resyy/2+(0:(ny-1))*(bd-resyy)/(ny-1);
+% an = angle(complex(rh,bw/2));
+% % E side
+% nnE = [-cos(an/2),0,sin(an/2)]*resyy/2;
+% y.surface = [y.surface;[-bw/2*ones(ny,1),yy(:),bh*ones(ny,1)]];
+% y.normal  = [y.normal; repmat(nnE,ny,1)];
+% nnW = [ cos(an/2),0,sin(an/2)]*resyy/2;
+% y.surface = [y.surface;[ bw/2*ones(ny,1),yy(:),bh*ones(ny,1)]];
+% y.normal  = [y.normal; repmat(nnW,ny,1)];
+% y.res     = [y.res;    resyy*ones(ny*2,1)];
+% y.corner  = [y.corner; repmat([an,pi/2],ny*2,1)];
+% y.material= [y.material; repmat(matRoof,ny*2,1)];
+% 
+% % Roof triangle corners
+% rs = hypot(rh,bw/2);
+% an = angle(complex(rh,bw/2));
+% resxx = min([rs/2,res]);
+% nx = ceil(rs/resxx);
+% rr = resxx/2+(0:(nx-1))*(rs-resxx)/(nx-1);
+% xx = rr(end:-1:1)*sin(an);
+% zz = bh+rr*cos(an);
+% nnE = [ cos(an),0,sin(an)]*resxx/2;
+% ccE = [-sin(an),0,cos(an)];
+% nnSE = RotateAroundAxis(nnE,ccE,-pi/4);
+% nnNE = RotateAroundAxis(nnE,ccE, pi/4);
+% ccW = [ sin(an),0,cos(an)];
+% nnW = [-cos(an),0,sin(an)]*resxx/2;
+% nnSW = RotateAroundAxis(nnW,ccW, pi/4);
+% nnNW = RotateAroundAxis(nnW,ccW,-pi/4);
+% 
+% % S/W side
+% y.surface = [y.surface;[-xx(:),-bd/2*ones(nx,1),zz(:)]];
+% y.normal  = [y.normal; repmat(nnSW,nx,1)];
+% ac = Line2Corner(ccW,nnSW);
+% y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
+% % N/W side
+% y.surface = [y.surface;[-xx(:),bd/2*ones(nx,1),zz(:)]];
+% y.normal  = [y.normal; repmat(nnNW,nx,1)];
+% ac = Line2Corner(ccW,nnNW);
+% y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
+% % S/E side
+% y.surface = [y.surface;[xx(:),-bd/2*ones(nx,1),zz(:)]];
+% y.normal  = [y.normal; repmat(nnSE,nx,1)];
+% ac = Line2Corner(ccE,nnSE);
+% y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
+% % N/E side
+% y.surface = [y.surface;[xx(:),bd/2*ones(nx,1),zz(:)]];
+% y.normal  = [y.normal; repmat(nnNE,nx,1)];
+% ac = Line2Corner(ccE,nnNE);
+% y.corner  = [y.corner; repmat([pi/2,ac],nx,1)];
+% y.res     = [y.res;    resxx*ones(nx*4,1)];
+% y.material= [y.material; repmat(matRoof,nx*4,1)];
+% 
+% % Top corner
+% resyy = min([bd/2,res]);
+% ny = ceil(bd/resyy);
+% an = atan(rh/(bw/2));
+% cc = [1 0 0];
+% nn = [1e-10 0 1]*resyy/2;
+% ac = Line2Corner(cc,nn);
+% yy = -bd/2+resyy/2+(0:(ny-1))*(bd-resyy)/(ny-1);
+% y.surface = [y.surface;  [zeros(ny,1),yy(:),(bh+rh)*ones(ny,1)]];
+% y.normal  = [y.normal;   repmat(nn,ny,1)];
+% y.res     = [y.res;      resyy*ones(ny,1)];
+% y.corner  = [y.corner;   repmat([2*an,ac+pi/2],ny,1)];
+% y.material= [y.material; repmat(matRoof,ny,1)];
+% 
+% 
+% % figure(1), clf;
+% % hold on;
+% % ind = find(y.corner(:,1)==0);
+% % for ii=ind(:)'
+% %     plot3(y.surface(ii,1),y.surface(ii,2),y.surface(ii,3),'r*')
+% %     plot3(y.surface(ii,1)+[0,y.normal(ii,1)],y.surface(ii,2)+[0,y.normal(ii,2)],y.surface(ii,3)+[0,y.normal(ii,3)],'r.:')
+% % end
+% % ind = find(y.corner(:,1)~=0);
+% % for ii=ind(:)'
+% %     plot3(y.surface(ii,1),y.surface(ii,2),y.surface(ii,3),'g*')
+% %     plot3(y.surface(ii,1)+[0,y.normal(ii,1)],y.surface(ii,2)+[0,y.normal(ii,2)],y.surface(ii,3)+[0,y.normal(ii,3)],'g.:')
+% % end
+% % xlabel('X'); ylabel('Y'), zlabel('Z');
+% % axis equal
+% % pause(0);

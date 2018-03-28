@@ -31,13 +31,13 @@
 
 function PlotLOS(u,POV0,POV1)
 
-[indLOS0,indNLOS0] = u.FindLOS(POV0);
+[indLOS0,indNLOS0] = u.FindLOS(POV0,sys.maxRadius);
 if ~exist('POV1','var') || isempty(POV1)
     indLOS1  = indLOS0;
     indNLOS1 = indNLOS0;
     POV1     = POV0;
 else
-    [indLOS1,indNLOS1] = u.FindLOS(POV1);
+    [indLOS1,indNLOS1] = u.FindLOS(POV1,sys.maxRadius);
 end
 indLOS   = intersect(indLOS0,indLOS1);
 indNLOS  = union(indNLOS0,indNLOS1);
@@ -45,10 +45,7 @@ indLOS00 = setdiff(indLOS0,indLOS);
 indLOS11 = setdiff(indLOS1,indLOS);
 
 clf;
-if numel(indNLOS)
-    a = u.GetAtoms(indNLOS);
-    a.Plot('b');
-end
+
 hold on;
 if numel(indLOS)
     a = u.GetAtoms(indLOS);
@@ -73,7 +70,12 @@ if u.CheckLOS(POV0,POV1)
 end
 
 title('Atoms in LOS of both endpoints')
-xlabel('X'); ylabel('Y'); zlabel('Z');
-axis tight
-hold off;
 
+s=u.GetStructures;
+for k=1:length(s)
+    s(k).Plot(0);
+end
+
+xlabel('X'); ylabel('Y'); zlabel('Z');
+hold off;
+axis equal

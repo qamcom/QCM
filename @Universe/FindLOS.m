@@ -27,7 +27,8 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [indLOS,indNLOS] = FindLOS(u,POV)
+function [indLOS,indNLOS] = FindLOS(u,POV,range)
+
 
 POV=round(POV/sys.largeScaleResolution)*sys.largeScaleResolution;
 
@@ -43,24 +44,22 @@ if isempty(ind)
     
     % All atoms
     a = u.GetAtoms;
+    s = u.GetStructures;
     
     if isempty(a.res)
         indLOS = [];
     else
-        % Atoms and Surfaces vs LOS point (Put POV in origo)
-        losS=[a.surface(:,1)-POV(1),a.surface(:,2)-POV(2),a.surface(:,3)-POV(3)];
+        % Atoms vs LOS point (Put POV in origo)
+        losS = VectorAdd(a.surface,-POV);
         
         % Max range
-        indRange = find(vnorm(losS,2)<sys.maxRadius);
+        indRange = find(vnorm(losS,2)<range);
         
         if ~isempty(indRange)
             
             % Atoms in range
             a = u.GetAtoms(indRange);
-            
-            % Put shading spheres on both sides of surfaces.
-            % Visible atoms a union of both modes...
-            ptmask = FindCore(a,POV);
+            ptmask = FindCore(a,s,POV,range);
             indLOS = indRange(ptmask==1);
             indLOS = indLOS(:);
             
@@ -86,77 +85,33 @@ indNLOS = setdiff(1:u.nrofAtoms,indLOS);
 
 end
 
-function ptmask = FindCore(a,POV)
+function ptmask = FindCore(a,s,POV,range)
 
 
-
-% Atoms and Surfaces vs LOS point (Put POV in origo)
-losS=[a.surface(:,1)-POV(1),a.surface(:,2)-POV(2),a.surface(:,3)-POV(3)];
-
-
-indAtom = find(~a.corner(:,1)&[a.material.shading]'==1); % Corners & Flat ground cast no shade...
-
+% Atoms vs LOS point (Put POV in origo)
+losS = VectorAdd(a.surface,-POV);
 
 N = size(a.surface,1);
 
+% Pruning atoms with surface points in shade
+ptmask = ones(N,1)==1;
 
-losC = losS-a.normal;
-rtpC = Polar3D(losC);
-rtpS = Polar3D(losS);
 
-% Sort shading atoms, so closest comes first
+% Sort shading structures, so closest comes first
 % Tese are most likely to cast shade onm any others
 % Quickly reducing remaining atoms to trace during first iterations
-[~,sortC] = sort(rtpC(indAtom,1));
-sortC=indAtom(sortC(:))';
+p0   = VectorAdd(reshape([s.p0],3,[])',-POV);
+r0 = vnorm(p0,2);
+[~,sortS] = sort(r0);
 
-% Tuning
-CC = 2;
-CR = 10;
 
-% Pruning atoms with surface points in shade
-ptmask = ones(N,1);
-
-% This loop is a huge part of all ops in QCM...
-% Candidate for GPU and/or Cluster acceleration
-% Iteration can be done in parallel smaller loops. Combined thru "ptmask"
-% if "quicktrace" is disabled/removed
-for ii=sortC
-    if (ptmask(ii) || ~sys.quickTrace)
-        
-        
-        
-        if sys.bubbleTrace
-            
-            % Shading atom center
-            phiC0    = rtpC(ii,3);
-            thetaC0  = rtpC(ii,2);
-            radiusC0 = rtpC(ii,1);
-            size0    = a.res(ii);
-            
-            % Shaded atoms
-            critAoA = find(abs(rtpS(:,3)-phiC0).*sin(rtpS(:,2))*radiusC0 <= size0/CC);
-            critEoA = (abs(rtpS(critAoA,2)-thetaC0)*radiusC0 <= size0/CC);
-            critR   = (rtpS(critAoA,1)>=radiusC0+size0/CR);
-            ptmask(critAoA(critEoA&critR)) = 0;
-            
-        else
-            
-            % POV is in origo.
-            % Shading atom surface losS(ii,:) with normal losN(ii,:)
-            
-            % Rays will intersect plane defined by shading atom.
-            % dd is the relative distance. <1 means atom is closer than plane.
-            % rr is the distance btw pt of intersect, and atom surface center
-            [dd,rr] = LinePlaneIntersect([0 0 0],losS,losS(ii,:),a.normal(ii,:));
-            size0 = a.res(ii);
-            ptmask(dd<1&rr<size0/2) = 0;
-            
-            
-        end
-        
-        
-        
+for ii = sortS(r0<range)'
+    points   = s(ii).points;
+    surfaces = s(ii).surfaces;
+    for ss = 1:length(surfaces)
+        p = VectorAdd(points(surfaces{ss}.pi,:),-POV);
+        behind = BehindPolygon(p,losS(ptmask,:));
+        ptmask(ptmask)=~behind;
     end
 end
 

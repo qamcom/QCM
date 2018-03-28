@@ -43,7 +43,7 @@ losRadius = norm(pov1.position-pov0.position);
 losMetas   = cell(pov0.antsys.n,pov1.antsys.n);
 nlosMetas  = cell(pov0.antsys.n,pov1.antsys.n);
 n2losMetas = cell(pov0.antsys.n,pov1.antsys.n);
-n3losMetas = cell(pov0.antsys.n,pov1.antsys.n);
+nxlosMetas = cell(pov0.antsys.n,pov1.antsys.n);
 
 for pp0 = 1:pov0.antsys.n
     
@@ -52,7 +52,7 @@ for pp0 = 1:pov0.antsys.n
     dp0 = pov0.antsys.dualpol;
     
     % Find LOS atoms
-    indLOS0 = u.FindLOS(POV0);
+    indLOS0 = u.FindLOS(POV0,sys.maxRadius);
     
     for pp1 = 1:pov1.antsys.n
         
@@ -62,12 +62,12 @@ for pp0 = 1:pov0.antsys.n
         dp1 = pov1.antsys.dualpol;
         
         % Find LOS atoms
-        indLOS1    = u.FindLOS(POV1);
+        indLOS1    = u.FindLOS(POV1,sys.maxRadius);
         
         losCoeff   = 0; losMeta.P=-inf;
         nlosCoeff  = 0; nlosMeta.P=-inf;
         n2losCoeff = 0; n2losMeta.P=-inf;
-        n3losCoeff = 0; n3losMeta.P=-inf;
+        nxlosCoeff = 0; nxlosMeta.P=-inf;
         
         if sys.enableLOS || sys.forceLOS
             
@@ -187,7 +187,7 @@ for pp0 = 1:pov0.antsys.n
         % Higher order paths
         N0 = numel(indLOS00);
         N1 = numel(indLOS11);
-        if N0&&N1&&(sys.enableN2LOS || sys.enableN3LOS)
+        if N0&&N1&&(sys.enableN2LOS || sys.enableNXLOS)
             
             % Select closest secondary cluster locations vs _other_ POVs
             a0       = u.GetAtoms(indLOS00);
@@ -329,7 +329,7 @@ for pp0 = 1:pov0.antsys.n
                 % No LOS. Let's connect with stoch. model
                 inds01 = find(LOS(:)==0|~sys.enableN2LOS);
                 N = numel(inds01);
-                if N && sys.enableN3LOS, % There were one or more 2+ bounce paths
+                if N && sys.enableNXLOS, % There were one or more 2+ bounce paths
                     path01  = zeros(N,3);
                     inds0   = zeros(N,1);
                     inds1   = zeros(N,1);
@@ -342,7 +342,7 @@ for pp0 = 1:pov0.antsys.n
                         speed01(ii)  = speed0(ind0)+speed1(ind1); % Speed of POVs approaching each others (via a0 and a1)
                     end
                     
-                    [n3losCoeff,n3losMeta] = N3losCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,...
+                    [nxlosCoeff,nxlosMeta] = NXlosCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,...
                         a0.material(inds0),a1.material(inds1),...
                         a0.corner(inds0,:),a1.corner(inds1,:),radius0(inds0),radius1(inds1),radius01(inds01),...
                         elevation0(inds0),elevation1(inds1),offAzimuth0(inds0),...
@@ -351,9 +351,9 @@ for pp0 = 1:pov0.antsys.n
                         a0.res(inds0),a1.res(inds1),h0(inds0),h1(inds1),u.scenario,rain,sys.raySelThreshold,bb);
                     
                     % Traced paths
-                    if ~isempty(n3losMeta)
-                        n3losMeta.ind1 = indLOS11(inds1); % Indece of atoms in LOS with antenna 1
-                        n3losMeta.ind0 = indLOS00(inds0); % Indece of atoms in LOS with antenna 0
+                    if ~isempty(nxlosMeta)
+                        nxlosMeta.ind1 = indLOS11(inds1); % Indece of atoms in LOS with antenna 1
+                        nxlosMeta.ind0 = indLOS00(inds0); % Indece of atoms in LOS with antenna 0
                     end
                 end
                 
@@ -363,9 +363,9 @@ for pp0 = 1:pov0.antsys.n
         Meta.los{pp0,pp1}   = losMeta;
         Meta.nlos{pp0,pp1}  = nlosMeta;
         Meta.n2los{pp0,pp1} = n2losMeta;
-        Meta.n3los{pp0,pp1} = n3losMeta;
+        Meta.nxlos{pp0,pp1} = nxlosMeta;
         
-        tmpHf = losCoeff+nlosCoeff+n2losCoeff+n3losCoeff;
+        tmpHf = losCoeff+nlosCoeff+n2losCoeff+nxlosCoeff;
         
         % Cat POV1
         if pp1==1
@@ -394,7 +394,7 @@ y.range     = losRadius;
 y.los       = Meta.los;
 y.nlos      = Meta.nlos;
 y.n2los     = Meta.n2los;
-y.n3los     = Meta.n3los;
+y.nxlos     = Meta.nxlos;
 y.P         = 20*log10(rms(Hf(:)));
 y.Hf        = Hf;
 

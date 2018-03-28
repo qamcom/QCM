@@ -29,7 +29,7 @@ function Plot(a,forceColor)
 hold on;
 
 EdgeAlpha = 0.99;
-FaceAlpha = 0.9;
+FaceAlpha = 0.6;
 
 % Plot Surfaces
 if sys.plotSurfacePatches
@@ -47,14 +47,30 @@ if sys.plotCornerPatches
 end
 [x,y,z] = a.CornerLines;
 if nargin==1
-    line(x,y,z,'Color','k','LineWidth',2);
+    c = 'k';
 else
-    line(x,y,z,'Color',forceColor,'LineWidth',2);
+    c = forceColor;
 end
+line(x,y,z,'Color',c,'LineWidth',2);
 
 if sys.plotAtomNormals
-    error('Not implemented.')
-end
+    ind = find(vnorm(a.normal,2)&(a.corner(:,1)==0));
+    ss0 = a.surface(ind,:);
+    ssn = a.surface(ind,:)+a.normal(ind,:);
+
+    line([ss0(:,1),ssn(:,1)]',[ss0(:,2),ssn(:,2)]',[ss0(:,3),ssn(:,3)]','Color','k');
+    plot3(ss0(:,1)',ss0(:,2)',ss0(:,3)','k.');
+    %plot3(ssn(:,1)',ssn(:,2)',ssn(:,3)','g*');
+    
+    ind = find(vnorm(a.normal,2)&(a.corner(:,1)~=0));
+    ss0 = a.surface(ind,:);
+    ssn = a.surface(ind,:)+a.normal(ind,:);
+
+    line([ss0(:,1),ssn(:,1)]',[ss0(:,2),ssn(:,2)]',[ss0(:,3),ssn(:,3)]','Color','k');
+    plot3(ss0(:,1)',ss0(:,2)',ss0(:,3)','k.');
+    %plot3(ssn(:,1)',ssn(:,2)',ssn(:,3)','r*');
+
+ end
 
 % Plot Spheres (no surface, no corner)
 if sys.plotShadingSpheres

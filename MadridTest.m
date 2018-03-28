@@ -1,6 +1,7 @@
 rng(2);
 
-scenario = 2; % 1 or 2
+scenario = 2; % 1=Array+City walk or 2=Single antenna 1000pt drive down one street
+itmode   = 0; % 0=batch, 1=link by link
 
 
 % METIS Madrid Grid
@@ -133,7 +134,7 @@ switch scenario
         ueAntsys   = AntennaSystem('UE',{ueAnt},[0 0 0],[0],[0],[0],dualpol);
         
         % Define UE positions
-        nUNd = 10000;
+        nUNd = 1000;
         UNdPos = [linspace(9,387,nUNd).' 276*ones(nUNd,1) 10*ones(nUNd,1)];
         
         inds = 1:nUNd;
@@ -167,7 +168,6 @@ u.PlotLOS(x0{1}.position,x1{1}.position);
 rain  = 0; % mm/h
 times = 0;
 
-itmode =1;
 tic
 if itmode==0
     
@@ -197,7 +197,7 @@ if itmode==0
 %                 PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
 
                 PP(n,3,n0,n1) = link.n2los{n0,n1}.P;
-                PP(n,4,n0,n1) = link.n3los{n0,n1}.P;
+                PP(n,4,n0,n1) = link.nxlos{n0,n1}.P;
             end
         end
     end
@@ -235,8 +235,7 @@ else
 %                 PPa(n,1,n0,n1)  = link.nlos{n0,n1}.atmosphereCoeff;
                 
                 PP(n,3,n0,n1) = link.n2los{n0,n1}.P;
-                PP(n,4,n0,n1) = link.n3los{n0,n1}.P;
-                PP(n,5,n0,n1) = link.n3los{n0,n1}.P;
+                PP(n,4,n0,n1) = link.nxlos{n0,n1}.P;
             end
         end
         
@@ -262,7 +261,7 @@ plot(UNdPos(inds,1),squeeze(PP(:,4,:)),'c:');
 %plot(UNdPos(inds,1),squeeze(PPe1(:,1,:)),'k:');
 %plot(UNdPos(inds,1),squeeze(PPd(:,1,1)),'k:'); 
 %plot(UNdPos(inds,1),squeeze(PPa(:,1,:)),'k:');
-legend({'RMS','los','nlos','n2los','n3los'})
+legend({'RMS','los','nlos','n2los','nxlos'})
 xlabel('UNdPos [m]');
 ylabel('RMS Path Loss incl antennas [dB]');
 grid on;

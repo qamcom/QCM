@@ -27,14 +27,13 @@ classdef Universe < handle
         tag;        % Identifier string
         nrofAtoms;
         nrofObj;
-        obj;        % Object list (ground, buildings etc)
-        atoms;      % Classdef Atoms (Surfaces & Corners)
         scenario;   % Scenario for stochastic component (N3LOS)
     end
     
     properties (Access = private)
         los;    % POV cache
-        nudge0; % Original atom def (before any Nudge)
+        atoms;  % Atoms list (for quick access) 
+        obj;    % Object list (ground, buildings etc. each with optional polygon set)
     end
     
     methods
@@ -49,21 +48,49 @@ classdef Universe < handle
             else
                 u.scenario  = 'hata-urban-smallcity';
             end
-            u.atoms = Atoms;
         end
         
         % Clear LOS cache
         function ResetLOS(u)
             u.los   = [];
             u.los.N = 0;
+            u.atoms = [];
         end
         
-        
-        % Add atoms to universe
-        AddAtoms(u,tag,x,pos,rot);
-        
+        % Add Structure to universe
+        % Will be tiled into atoms.
+        % x.point(pi,1:3) XYZ coord of Points in structure
+        % x.surface{si}.pi(1:N): List of point-index vectors. N >= 3. Defines a Polygon
+        % x.corner{ci}.si(1:2):  Index of Two surfaces defining the corner.
+        % x.corner{ci}.pi(1:2):  Index of Two points defining the corner.
+        % res: Maximum tile size. [m]
+        % pos: Global position (XYZ)
+        % rot: Azimuth rotation (rad)
+        AddStructure(u,tag,x,res,pos,rot,velocity);
+                
         % Get all (or subset of) atoms in universe
-        y = GetAtoms(u,inds);
+        % cat method for AToms very slow. So keep results in cache
+        function y = GetAtoms(u,inds)
+            if isempty(u.atoms)
+                y = Atoms;
+                for o=1:u.nrofObj
+                    y = cat(y,u.obj(o).atoms);
+                end
+                u.atoms = y;
+            else
+                y=u.atoms;
+            end
+            if nargin==2
+                y = y.Prune(inds);
+            end
+        end
+        
+        % Get all structures in universe
+        function y = GetStructures(u)
+            for o=1:u.nrofObj
+                y(o)=u.obj(o).structure;
+            end
+        end
         
         % Render channel between several point-of-view pairs in universe
         y = Channels(u,x0,x1,freqs,times,rain,bb);
@@ -72,16 +99,18 @@ classdef Universe < handle
         [y,cc] = Channel(u,x0,x1,freqs,times,rain,bb);
         
         % Random nudge of location and alignmnet of atoms in universe
-        function natoms = Nudge(u,ratio,seed)
+        function Nudge(u,ratio,seed)
             if nargin<3, seed  = 0; end
             if nargin<2, ratio = 0.1; end
-            tmp=rng(seed);
-            u.atoms.surface = u.nudge0.surface + ratio*repmat(u.atoms.res,1,3).*randn(u.nrofAtoms,3);
-            u.atoms.normal  = u.nudge0.normal  + ratio*randn(u.nrofAtoms,3);
+            tmp=rng;
+            for k=1:u.nrofObj
+                rng(seed);
+                o = u.obj(k);
+                o.atoms.surface = o.atoms0.surface + ratio*repmat(o.atoms.res,1,3).*randn(o.nrofAtoms,3);
+                o.atoms.normal = o.atoms0.normal + ratio*randn(o.nrofAtoms,3);
+            end
             rng(tmp);
-            natoms = u.nrofAtoms;
         end
-        
         
         % System Evaluation
         % A: Activity factor A(tx-node,rx-node) [0,1]
@@ -89,79 +118,7 @@ classdef Universe < handle
         % snr(cell/tx index, layer-index): Single-layer SNR (linear)
         % snr0(cell/tx index, ms-index): Single layer SNR w/o precoding (eg BCH)
         % sinrPredict, same as sinr but predicted using OrthoTest
-        function [sinr,snr,snr0,sinrPredict,C] = System(u,TXpov,RXpov,A,freqs,times,rain)
-            
-            BW = (max(freqs)-min(freqs));
-            pn0 = 4*sys.kB*sys.T*BW;    % Ideal noise floor [Watt]
-            
-            Nrx = numel(RXpov);
-            Ntx = numel(TXpov);
-            ii=0;
-            for txi = 1:Ntx
-                TX = TXpov{txi};
-                Pt = TX.hardware.power;
-                pt = 10^((Pt-30)/20);         % Transmitter output power [Watt]
-                Hmu = [];
-                for rxi = 1:Nrx
-                    if A(txi,rxi)
-                        
-                        % Get channel
-                        RX   = RXpov{rxi};
-                        NFr  = RX.hardware.nf;
-                        pn   = pn0*10^(NFr/20); % Receiver noise power [Watt]
-                        link = u.Channel(RX,TX,freqs,times,rain);
-                        H    = link.Hf;
-                        
-                        % Concat for MU case below
-                        Ns = size(H,1);
-                        SUind{rxi}=size(Hmu,1)+(1:Ns);
-                        Hmu(SUind{rxi},:,:,:) = H;
-                        
-                        % Multi-layer. Single user case
-                        P    = TX.algorithm.DesignPrecoder(H,Pt,NFr,BW);
-                        HP   = TX.algorithm.Precode(H,P);
-                        E    = RX.algorithm.DesignEqualizer(HP,NFr,BW);
-                        EHP  = RX.algorithm.Equalize(HP,E);
-                        snr(txi,SUind{rxi})= diag(rms(rms(EHP,3),4)).^2*pt/pn/Ns; % PC&EQ Link signal vs Noise floor
-                        
-                        % Single layer. No precoder (typ. broadcasting)
-                        EH  = RX.algorithm.Equalize(H,E);
-                        snr0(txi,rxi) = rms(EH(:)).^2*pt/pn; % EQ Link signal vs Noise floor
-                    end
-                end
-                
-                % Multiuser case
-                
-                % Actual SINR
-                Pmu  = TX.algorithm.DesignPrecoder(Hmu,Pt,NFr,BW);
-                HPmu = TX.algorithm.Precode(Hmu,Pmu);
-                for rxi = 1:Nrx
-                    if A(txi,rxi)
-                        RX    = RXpov{rxi};
-                        NFr   = RX.hardware.nf;
-                        HPsu  = HPmu(SUind{rxi},SUind{rxi},:,:);                % Useful channel
-                        IPsc  = HPmu(SUind{rxi},setdiff(1:end,SUind{rxi}),:,:); % Channel for Inter MS (Intra Cell) interference channel
-                        Esu   = RX.algorithm.DesignEqualizer(HPsu,NFr,BW);
-                        EHPsu = RX.algorithm.Equalize(HPsu,Esu);
-                        Ns    = size(EHPsu,1);
-                        for stream = 1:Ns
-                            S  = mean(abs(EHPsu(stream,stream,:).^2));
-                            Iu = mean(sum(abs(EHPsu(stream,setdiff(1:Ns,stream),:)).*2,2));
-                            Ic = mean(sum(abs(IPsc(stream,:,:)).^2,2));
-                            N  = pn/pt;
-                            sinr(txi,SUind{rxi})=S/(Iu+Ic+N); % PC&EQ Link signal vs Self inteference and Noise floor
-                        end
-                    end
-                end
-                
-                % Prediction based on OrthoTest
-                [~,tmp] = TX.algorithm.OrthoTest(Hmu,snr(txi,:));
-                sinrPredict(txi,:) = tmp;
-                
-            end
-            
-            
-        end
+        [sinr,snr,snr0,sinrPredict,C] = System(u,TXpov,RXpov,A,freqs,times,rain);
         
         % Visualize channel
         y = Trace(u,pov0,pov1,freqs,rain);
@@ -172,7 +129,6 @@ classdef Universe < handle
         
         % Plot 3D picture to illustrate line-of-sight
         PlotLOS(u,POV0,POV1);
-        
         
         
     end

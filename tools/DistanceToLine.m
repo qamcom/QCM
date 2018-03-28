@@ -41,7 +41,7 @@ if size(x01,1)==1, x01=repmat(x01,N,1); end
 if size(x12,1)==1, x12=repmat(x12,N,1); end
 
 d = CrossMag(x12,x01)./d12;
-t = -sum(x01.*x12,2)./d12;
+t = -sum(x01.*x12,2)./d12.^2;
 
 % t measured from closest endpoint
 %t(t>d12/2) = d12-t(t>d12/2);
