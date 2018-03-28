@@ -25,7 +25,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [sinr,snr,snr0,sinrPredict,C] = System(u,TXpov,RXpov,A,freqs,times,rain)
+function [sinr,snr,snr0,sinrPredict,meta] = System(u,TXpov,RXpov,A,freqs,times,rain)
 
 BW = (max(freqs)-min(freqs));
 pn0 = 4*sys.kB*sys.T*BW;    % Ideal noise floor [Watt]
@@ -47,6 +47,12 @@ for txi = 1:Ntx
             pn   = pn0*10^(NFr/20); % Receiver noise power [Watt]
             link = u.Channel(RX,TX,freqs,times,rain);
             H    = link.Hf;
+            
+            meta.rmsDelay(txi,rxi)=link.meta.rmsD/sys.c; 
+            meta.rmsDelaySpread(txi,rxi)=link.meta.rmsDspread/sys.c; 
+            meta.rmsRelDoppler(txi,rxi)=link.meta.rmsS/sys.c; 
+            meta.rmsRelDopplerSpread(txi,rxi)=link.meta.rmsSspread/sys.c; 
+
             
             % Concat for MU case below
             Ns = size(H,1);

@@ -46,17 +46,17 @@ xcT = k(ind).*xT(ind,:); % Intersect points
 behind      = zeros(size(x,1),1)==1;
 behind(ind) = inpolygon(xcT(:,1),xcT(:,2), pT(:,1), pT(:,2));
 
-% figure(100); hold off
-% plot3(p(:,1),p(:,2),p(:,3),'go');
-% x0=zeros(size(x));
-% hold on;
-% patch('XData',p(:,1),'YData',p(:,2),'ZData',p(:,3),'FaceAlpha',.5,'FaceColor','g');
-% plot3(x(:,1),x(:,2),x(:,3),'k.');
-% if 0
-% line([x0(:,1),x(:,1)]',[x0(:,2),x(:,2)]',[x0(:,3),x(:,3)]','Color','g');
-% end
-% line([x0(behind,1),x(behind,1)]',[x0(behind,2),x(behind,2)]',[x0(behind,3),x(behind,3)]','Color','r');
-% plot3(x(behind,1),x(behind,2),x(behind,3),'ro');
-% drawnow;
-% pause(0.1);
-% 
+if sys.debugTracer
+fprintf('behind=%d\n',sum(behind))
+figure(sys.debugTracer); hold off
+plot3(p(:,1),p(:,2),p(:,3),'go');
+x0=zeros(size(x));
+hold on;
+patch('XData',p(:,1),'YData',p(:,2),'ZData',p(:,3),'FaceAlpha',.5,'FaceColor','g');
+plot3(x(:,1),x(:,2),x(:,3),'k.');
+line([x0(behind,1),x(behind,1)]',[x0(behind,2),x(behind,2)]',[x0(behind,3),x(behind,3)]','Color','r');
+plot3(x(behind,1),x(behind,2),x(behind,3),'ro');
+drawnow;
+pause(0.1);
+end
+

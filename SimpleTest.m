@@ -111,7 +111,7 @@ for ny=-(Ny-1)/2:(Ny-1)/2
         rot      = 0;
         structure = BuildingStructure(corners,bh(n),matWall,matRoof);
         tag = sprintf('Building%d',n);
-        universe.AddStructure(tag,structure,resHouse,pos,rot);
+        bldIndex(n)=universe.AddStructure(tag,structure,resHouse,pos,rot);
 
         
         %end
@@ -133,8 +133,8 @@ end
 x0=cell(0);
 x1=cell(0);
 
-
-%universe.Nudge;
+% Shake universe
+universe.Nudge;
 
 % x = PointOfView(tag,agroup,position,elevation,azimuth,velocity)
 
@@ -160,6 +160,21 @@ figure(3);
 universe.Plot(x0,x1);
 pause(0.1)
 
+
+% DefStructure(u,index,enabled,tag,structure,res,pos,rot,velocity)
+universe.DefStructure(bldIndex(2),0); % Disable
+figure(4);
+universe.Plot(x0,x1);
+
+universe.DefStructure(bldIndex(2),1,[],[],1); % Enable with new res
+figure(5);
+universe.Plot(x0,x1);
+
+universe.DefStructure(bldIndex(2),[],[],[],[],[],pi/4); % Rotate 45'
+figure(6);
+universe.Plot(x0,x1);
+
+pause(0.1)
 figure(10);
 universe.PlotLOS(x0{1}.position,x1{1}.position);
 
@@ -167,7 +182,9 @@ rain  = 0; % mm/h
 
 times = (0:1)*1e-6; % Steps [us] 
 
-[sinr,snr,snr0,sinrPredict] = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
+[sinr,snr,snr0,sinrPredict,meta] = universe.System(x0,x1,ones(length(x0),length(x1)),freqs,times,rain);
+
+meta
 
 % Predicted MU/SC data (Precoder and Equalizer to maximize concurrent links to all MS(x1))
 predictedSINRmu_dB    = 10*log10(sinrPredict)

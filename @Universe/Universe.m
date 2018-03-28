@@ -27,13 +27,13 @@ classdef Universe < handle
         tag;        % Identifier string
         nrofAtoms;
         nrofObj;
-        scenario;   % Scenario for stochastic component (N3LOS)
+        scenario;   % Scenario for stochastic component (NXLOS)
+        objects = Item;    % Object list (ground, buildings etc. )
     end
     
     properties (Access = private)
         los;    % POV cache
         atoms;  % Atoms list (for quick access) 
-        obj;    % Object list (ground, buildings etc. each with optional polygon set)
     end
     
     methods
@@ -59,22 +59,44 @@ classdef Universe < handle
         
         % Add Structure to universe
         % Will be tiled into atoms.
-        % x.point(pi,1:3) XYZ coord of Points in structure
-        % x.surface{si}.pi(1:N): List of point-index vectors. N >= 3. Defines a Polygon
-        % x.corner{ci}.si(1:2):  Index of Two surfaces defining the corner.
-        % x.corner{ci}.pi(1:2):  Index of Two points defining the corner.
+        % structure.point(pi,1:3) XYZ coord of Points in structure
+        % structure.surface{si}.pi(1:N): List of point-index vectors. N >= 3. Defines a Polygon
+        % structure.corner{ci}.si(1:2):  Index of Two surfaces defining the corner.
+        % structure.corner{ci}.pi(1:2):  Index of Two points defining the corner.
         % res: Maximum tile size. [m]
         % pos: Global position (XYZ)
         % rot: Azimuth rotation (rad)
-        AddStructure(u,tag,x,res,pos,rot,velocity);
-                
+        % velocity: Velocity vector [sx,sy,sz] m/s
+        function index = AddStructure(u,tag,structure,res,pos,rot,velocity)
+            if ~exist('pos','var')||isempty(pos), pos=[0 0 0];       end
+            if ~exist('rot','var')||isempty(rot), rot=0;       end
+            if ~exist('velocity','var')||isempty(velocity), velocity=[0 0 0];       end
+            if u.nrofObj
+                index = u.nrofObj+1;
+            else
+                index = 1;
+            end
+            u.nrofObj = index;
+            u.objects(index)=Item;
+
+            DefStructure(u,index,1,tag,structure,res,pos,rot,velocity);
+            u.ResetLOS;
+
+        end
+                        
+        % Re/Define Structure in universe
+        DefStructure(u,index,valid,tag,structure,res,pos,rot,velocity);
+        
         % Get all (or subset of) atoms in universe
         % cat method for AToms very slow. So keep results in cache
         function y = GetAtoms(u,inds)
             if isempty(u.atoms)
                 y = Atoms;
-                for o=1:u.nrofObj
-                    y = cat(y,u.obj(o).atoms);
+                valid = find([u.objects.enabled]);
+                for k=1:numel(valid)
+                    o = valid(k);
+                    a = u.objects(o).atoms;
+                    y = cat(y,a);
                 end
                 u.atoms = y;
             else
@@ -85,10 +107,16 @@ classdef Universe < handle
             end
         end
         
-        % Get all structures in universe
+        % Get all structures in universe (global pos)
         function y = GetStructures(u)
-            for o=1:u.nrofObj
-                y(o)=u.obj(o).structure;
+            valid = find([u.objects.enabled]);
+            for k=1:numel(valid)
+                o = valid(k);
+                obj = u.objects(o);
+                structure = obj.structure;
+                structure.points = RotateVectorZ(structure.points ,obj.rot)+obj.pos;
+                structure.p0     = structure.p0+obj.pos;
+                y(k)=structure;
             end
         end
         
@@ -105,9 +133,10 @@ classdef Universe < handle
             tmp=rng;
             for k=1:u.nrofObj
                 rng(seed);
-                o = u.obj(k);
-                o.atoms.surface = o.atoms0.surface + ratio*repmat(o.atoms.res,1,3).*randn(o.nrofAtoms,3);
-                o.atoms.normal = o.atoms0.normal + ratio*randn(o.nrofAtoms,3);
+                o = u.objects(k);
+                nn = size(o.atoms0.surface,1);
+                o.atoms.surface = o.atoms0.surface + ratio*repmat(o.atoms.res,1,3).*randn(nn,3);
+                o.atoms.normal = o.atoms0.normal + ratio*randn(nn,3);
             end
             rng(tmp);
         end
@@ -133,3 +162,21 @@ classdef Universe < handle
         
     end
 end
+
+function x=UniqueToken(remove)
+persistent active
+if nargin
+    active = setdiff(active,remove);
+end
+if nargout
+    if ~isempty(active)
+        free = setdiff(1:max(active)+1,active);
+        x    = min(free);
+        active(end+1)=x;
+    else
+        x      = 1;
+        active = 1;
+    end
+end
+end
+

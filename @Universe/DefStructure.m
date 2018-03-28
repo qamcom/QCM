@@ -1,19 +1,14 @@
-% Add Structure to universe
-% Will be tiled into atoms.
-% x.point(pi,1:3) XYZ coord of Points in structure
-% x.surface{si}.pi(1:N): List of point-index vectors. N >= 3. Defines a Polygon
-% x.corner{ci}.si(1:2):  Index of Two surfaces defining the corner.
-% x.corner{ci}.pi(1:2):  Index of Two points defining the corner.
-% res: Maximum tile size. [m]
-% pos: Global position (XYZ)
-% rot: Azimuth rotation (rad)
-function nn = AddStructure(u,tag,structure,res,pos,rot,velocity)
+% (re)Define Structure in universe
+% DefStructure(u,index,enabled,tag,structure,res,pos,rot,velocity)
+function DefStructure(u,index,enabled,tag,structure,res,pos,rot,velocity)
 
-
-function DefStructure(u,nn,structure,res,pos,rot,velocity)
-
-if
-
+if ~exist('tag','var')||isempty(tag), tag=u.objects(index).tag; end
+if ~exist('structure','var')||isempty(structure), structure=u.objects(index).structure; end
+if ~exist('enabled','var')||isempty(enabled), enabled=u.objects(index).enabled; end
+if ~exist('res','var')||isempty(res), res=u.objects(index).res; end
+if ~exist('pos','var')||isempty(pos), pos=u.objects(index).pos; end
+if ~exist('rot','var')||isempty(rot), rot=u.objects(index).rot; end
+if ~exist('velocity','var')||isempty(velocity), velocity=u.objects(index).velocity; end
 
 
 atoms = Atoms;
@@ -23,21 +18,15 @@ pts = structure.points;
 structure.p0 = mean(pts);
 
 % Polygons to Surface Atoms
-Ns = numel(structure.surfaces); 
-atomOffset = 0;
+Ns = numel(structure.surfaces);
 for s = 1:Ns
     ss  = structure.surfaces{s};
     spi = ss.pi;
     sps = pts(spi,:);
-    mat = ss.material;                
+    mat = ss.material;
     % Tile this surface
     b  = Surface2Atoms(sps,mat,res);
     atoms  = cat(atoms,b);
-
-    nrofAtoms = length(b);
-    structure.surfaces{s}.firstAtom = atomOffset+1;
-    structure.surfaces{s}.nrofAtoms = nrofAtoms;
-    atomOffset = atomOffset+nrofAtoms;
 end
 
 % Lines to Corner Atoms
@@ -51,12 +40,12 @@ for c=1:Nc
     si1   = cc.si(2);     % Other side of corner (surface index)
     s0pi  = structure.surfaces{si0}.pi; % One side of corner (point index)
     s1pi  = structure.surfaces{si1}.pi; % Other side of corner (point index)
-    s0p   = pts(s0pi,:);   % One side of corner (3D points of surface poly) 
+    s0p   = pts(s0pi,:);   % One side of corner (3D points of surface poly)
     s1p   = pts(s1pi,:);   % Other side of corner (3D points of surface poly)
-    ind0(1)  = FindPt(s0p,pc(1,:)); 
-    ind0(2)  = FindPt(s0p,pc(2,:)); 
-    ind1(1)  = FindPt(s1p,pc(1,:)); 
-    ind1(2)  = FindPt(s1p,pc(2,:)); 
+    ind0(1)  = FindPt(s0p,pc(1,:));
+    ind0(2)  = FindPt(s0p,pc(2,:));
+    ind1(1)  = FindPt(s1p,pc(1,:));
+    ind1(2)  = FindPt(s1p,pc(2,:));
     ss0p  = ShrinkPolygon(s0p);
     ss1p  = ShrinkPolygon(s1p);
     pcc   = mean(pc);      % Corner center (3D pt)
@@ -74,15 +63,15 @@ for c=1:Nc
     beta  = Line2Corner(cpn,cn); % Corner orientation (0=vertical)
     mat   = cc.material;
     
-%     % Tile this corner
-     lenc = norm(cpn);
-     resc = min(res,lenc);
-     nc   = ceil(lenc/resc);
-     resc = lenc/nc;
-     cpos = zeros(nc,3);
-     for n=1:nc
-         cpos(n,:)=pc(1,:)+cpn*(n-0.5)/nc;
-     end
+    %     % Tile this corner
+    lenc = norm(cpn);
+    resc = min(res,lenc);
+    nc   = ceil(lenc/resc);
+    resc = lenc/nc;
+    cpos = zeros(nc,3);
+    for n=1:nc
+        cpos(n,:)=pc(1,:)+cpn*(n-0.5)/nc;
+    end
     
     % Each atom is defined by:
     %   normal:     3D vector perpendicular to atom surface. Length=res/2
@@ -92,11 +81,7 @@ for c=1:Nc
     %   res:        Atom size (1D: res=corner length, 2D: res^2 = area,
     b = Atoms(repmat(cn,nc,1),cpos,repmat(mat,nc,1),repmat([alfa,beta],nc,1),repmat(resc,nc,1),repmat(velocity,nc,1));
     atoms = cat(atoms,b);
- 
-    nrofAtoms = length(b);
-    structure.surfaces{s}.firstAtom = atomOffset+1;
-    structure.surfaces{s}.nrofAtoms = nrofAtoms;
-    atomOffset = atomOffset+nrofAtoms;
+    
     
 end
 
@@ -108,7 +93,6 @@ if isempty(atoms.velocity)
     atoms.velocity = zeros(nAtom,3);
 end
 
-structure.points = RotateVectorZ(structure.points ,rot)+pos;
 pts = structure.points;
 structure.p0 = mean(pts);
 structure.velocity = velocity;
@@ -119,15 +103,17 @@ structure.velocity = velocity;
 u.ResetLOS;
 
 % Add this structure to database
-u.obj(nn).valid = 1;
-u.obj(nn).tag = tag;
-u.obj(nn).atoms   = atoms;
-u.obj(nn).atoms0  = atoms; % For Nudge fcn
-u.obj(nn).firstAtom = u.nrofAtoms+1;
-u.obj(nn).nrofAtoms = nAtom;
-u.obj(nn).structure = structure;
-inds = u.nrofAtoms+(1:nAtom);
+u.objects(index).enabled = enabled;
+u.objects(index).tag = tag;
+u.objects(index).atoms   = atoms;
+u.objects(index).atoms0  = atoms; % For Nudge fcn
+u.objects(index).structure = structure;
+u.objects(index).res = res;
+u.objects(index).pos = pos;
+u.objects(index).rot = rot;
+u.objects(index).velocity = velocity;
 
-u.nrofObj   = nn;
+
+u.nrofObj   = index;
 u.nrofAtoms = u.nrofAtoms+nAtom;
 

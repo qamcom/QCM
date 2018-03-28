@@ -103,12 +103,13 @@ y      = single(y);
 meta.P = 20*log10(rms(y(:)));
 
 % Collect metadata
+meta.sel         = ind;
 if ~isempty(ind)
     meta.rays        = size(c,1);
-    meta.sel         = ind;
-    meta.LOS         = los01(ind);
     meta.coeff       = c(ind,:,:);
     meta.radius      = radius0(ind)+radius1(ind)+radius01(ind);
+    meta.speed       = speed(ind);
+    meta.LOS         = los01(ind);
     meta.atomAoA0    = azimuth0(ind)/pi*180;
     meta.atomEoA0    = elevation0(ind)/pi*180;
     meta.atomAoA1    = azimuth1(ind)/pi*180;

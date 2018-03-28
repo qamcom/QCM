@@ -66,6 +66,7 @@ y = single(y);
 meta.LOS     = LOS;
 meta.coeff   = c;
 meta.radius  = radius;
+meta.speed   = speed;
 meta.polDiff = polDiff/pi*180;
 meta.ant0AoA = offAzimuth0/pi*180;
 meta.ant0EoA = offElevation0/pi*180;

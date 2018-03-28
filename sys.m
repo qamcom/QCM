@@ -27,7 +27,7 @@
 classdef sys
    properties (Constant)
       maxRadius             = 400; % Max raytracing range [m]
-      secondOrderRange      = 100;  % Don't look further than this to find 2nd bounce [m]
+      secondOrderRange      = 50;  % Don't look further than this to find 2nd bounce [m]
       largeScaleResolution  = 1;   % Grid spacing, for retracing rays (shading) [m] 
       c                     = 3e8; % Speed of light [m/s]
       kB                    = 1.38e-23; % J/K, Boltzmann
@@ -37,11 +37,9 @@ classdef sys
       enableLOS             = 1;   % Trace first order path (LOS) if enabled (=1)
       forceLOS              = 0;   % Ensure LOS channel. Disregard any shading for LOS path. Overrides "enableLOS"
       enableNLOS            = 1;   % Trace 2nd order paths if enabled (=1)
-      enableN2LOS           = 1;   % Trace 3rd order paths if enabled (=1)
+      enableN2LOS           = 0;   % Trace 3rd order paths if enabled (=1)
       enableN3LOS           = 0;   % Trace 4th order paths if enabled (=1)
       enableNXLOS           = 0;   % Use stochastic model for >3rd (and 2nd if disabled) order paths if enabled (=1). 
-      quickTrace            = 1;   % Somewhat faster ray tracing, some infrequent mistakes possible
-      bubbleTrace           = 0;   % Use shading spheres (bubbles) for faster ray tracing
       forceNoScattering     = 0;
       forceNoDiffraction    = 0;
       forceNoReflection     = 0;
@@ -51,5 +49,6 @@ classdef sys
       plotAtomNormals       = 0;
       plotSurfacePatches    = 1;
       plotShadingSpheres    = 0;
+      debugTracer           = 0;
    end
 end

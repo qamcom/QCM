@@ -26,7 +26,7 @@ classdef Structure
         surfaces;
         corners;
         clouds;
-        velocity
+        velocity;
         p0;
     end
     

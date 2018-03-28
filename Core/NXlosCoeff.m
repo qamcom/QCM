@@ -111,12 +111,13 @@ y      = single(y);
 meta.P = 20*log10(rms(y(:)));
 
 % Collect metadata
+meta.sel         = ind;
 if ~isempty(ind)
     meta.rays        = size(c,1);
-    meta.sel         = ind;
-    meta.NLOS        = stochasticCoeff(ind);
     meta.coeff       = c(ind,:,:);
     meta.radius      = radius0(ind)+radius1(ind)+radius01(ind);
+    meta.speed       = speed(ind);
+    meta.NLOS        = stochasticCoeff(ind);
     meta.atomEoA0    = elevation0(ind)/pi*180;
     meta.atomEoA1    = elevation1(ind)/pi*180;
     meta.atomHeight0 = h0(ind);

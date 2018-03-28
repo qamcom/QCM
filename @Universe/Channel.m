@@ -45,6 +45,11 @@ nlosMetas  = cell(pov0.antsys.n,pov1.antsys.n);
 n2losMetas = cell(pov0.antsys.n,pov1.antsys.n);
 nxlosMetas = cell(pov0.antsys.n,pov1.antsys.n);
 
+% Ray Power, Speed and Distance
+P = [];
+S = [];
+D = [];
+
 for pp0 = 1:pov0.antsys.n
     
     [POV0,DOV0,NOV0,pol0,rot0,array0,vel0] = pov0.xyz(pp0);
@@ -365,6 +370,29 @@ for pp0 = 1:pov0.antsys.n
         Meta.n2los{pp0,pp1} = n2losMeta;
         Meta.nxlos{pp0,pp1} = nxlosMeta;
         
+        
+        if losMeta.P>-1000
+            D=[D;losMeta.radius];
+            S=[S;losMeta.speed];
+            P=[P;rms(losMeta.coeff).^2]; 
+        end        
+        if nlosMeta.P>-1000
+            D=[D;nlosMeta.radius];
+            S=[S;nlosMeta.speed];
+            P=[P;rms(nlosMeta.coeff(:,:),2).^2];
+        end
+        if n2losMeta.P>-1000
+            D=[D;n2losMeta.radius];
+            S=[S;n2losMeta.speed];
+            P=[P;rms(n2losMeta.coeff(:,:),2).^2];
+        end
+        if nxlosMeta.P>-1000
+            D=[D;nxlosMeta.radius];
+            S=[S;nxlosMeta.speed];
+            P=[P;rms(nxlosMeta.coeff(:,:),2).^2];
+        end
+        
+        
         tmpHf = losCoeff+nlosCoeff+n2losCoeff+nxlosCoeff;
         
         % Cat POV1
@@ -387,14 +415,16 @@ end
 
 cc = numel(Hf);
 
+Meta.rmsD       = sum(P.*D)/sum(P);
+Meta.rmsDspread = sqrt(sum(P.*(D-Meta.rmsD).^2)/sum(P));
+Meta.rmsS       = sum(P.*S)/sum(P);
+Meta.rmsSspread = sqrt(sum(P.*(S-Meta.rmsS).^2)/sum(P));
+
 y.tag       = sprintf('%s-%s',pov0.tag,pov1.tag);
 y.pov0      = pov0;
 y.pov1      = pov1;
 y.range     = losRadius;
-y.los       = Meta.los;
-y.nlos      = Meta.nlos;
-y.n2los     = Meta.n2los;
-y.nxlos     = Meta.nxlos;
+y.meta      = Meta;
 y.P         = 20*log10(rms(Hf(:)));
 y.Hf        = Hf;
 

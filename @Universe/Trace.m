@@ -48,22 +48,23 @@ NN1 = y.pov1.antsys.n;
 
 
 Pmax = -inf;
+meta = y.meta;
 for nn0=1:NN0
     for nn1=1:NN1
-        if isfield(y,'los') && ~isempty(y.los{nn0,nn1}) && isfield(y.los{nn0,nn1},'coeff')
-            P     = 20*log10(rms(y.los{nn0,nn1}.coeff(:)));
+        if isfield(meta,'los') && ~isempty(meta.los{nn0,nn1}) && isfield(meta.los{nn0,nn1},'coeff')
+            P     = 20*log10(rms(meta.los{nn0,nn1}.coeff(:)));
             Pmax  = max(Pmax,max(P));
         end
-        if isfield(y,'nlos') && ~isempty(y.nlos{nn0,nn1}) && isfield(y.nlos{nn0,nn1},'coeff')
-            P     = 20*log10(rms(y.nlos{nn0,nn1}.coeff(:,:),2));
+        if isfield(meta,'nlos') && ~isempty(meta.nlos{nn0,nn1}) && isfield(meta.nlos{nn0,nn1},'coeff')
+            P     = 20*log10(rms(meta.nlos{nn0,nn1}.coeff(:,:),2));
             Pmax  = max(Pmax,max(P));
         end
-        if isfield(y,'n2los') && ~isempty(y.n2los{nn0,nn1}) && isfield(y.n2los{nn0,nn1},'coeff')
-            P     = 20*log10(rms(y.n2los{nn0,nn1}.coeff(:,:),2));
+        if isfield(meta,'n2los') && ~isempty(meta.n2los{nn0,nn1}) && isfield(meta.n2los{nn0,nn1},'coeff')
+            P     = 20*log10(rms(meta.n2los{nn0,nn1}.coeff(:,:),2));
             Pmax  = max(Pmax,max(P));
         end
-        if isfield(y,'n3los') && ~isempty(y.n3los{nn0,nn1}) && isfield(y.n3los{nn0,nn1},'coeff')
-            P     = 20*log10(rms(y.n3los{nn0,nn1}.coeff(:,:),2));
+        if isfield(meta,'n3los') && ~isempty(meta.n3los{nn0,nn1}) && isfield(meta.n3los{nn0,nn1},'coeff')
+            P     = 20*log10(rms(meta.n3los{nn0,nn1}.coeff(:,:),2));
             Pmax  = max(Pmax,max(P));
         end
     end
@@ -88,11 +89,11 @@ for nn0=1:NN0
         
         
         % NLOS
-        if isfield(y,'nlos') && ~isempty(y.nlos{nn0,nn1}) && isfield(y.nlos{nn0,nn1},'coeff')
+        if isfield(meta,'nlos') && ~isempty(meta.nlos{nn0,nn1}) && isfield(meta.nlos{nn0,nn1},'coeff')
             
-            inds0 = y.nlos{nn0,nn1}.ind;
-            P     = 20*log10(rms(y.nlos{nn0,nn1}.coeff(:,:),2));
-            sel   = y.nlos{nn0,nn1}.sel;
+            inds0 = meta.nlos{nn0,nn1}.ind;
+            P     = 20*log10(rms(meta.nlos{nn0,nn1}.coeff(:,:),2));
+            sel   = meta.nlos{nn0,nn1}.sel;
             a0    = u.GetAtoms(inds0);
             
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
@@ -106,12 +107,12 @@ for nn0=1:NN0
         end
         
         % N2LOS
-        if isfield(y,'n2los') && ~isempty(y.n2los{nn0,nn1}) && isfield(y.n2los{nn0,nn1},'coeff')
+        if isfield(meta,'n2los') && ~isempty(meta.n2los{nn0,nn1}) && isfield(meta.n2los{nn0,nn1},'coeff')
             
-            inds0 = y.n2los{nn0,nn1}.ind0;
-            inds1 = y.n2los{nn0,nn1}.ind1;
-            P     = 20*log10(rms(y.n2los{nn0,nn1}.coeff(:,:),2));
-            sel   = y.n2los{nn0,nn1}.sel;
+            inds0 = meta.n2los{nn0,nn1}.ind0;
+            inds1 = meta.n2los{nn0,nn1}.ind1;
+            P     = 20*log10(rms(meta.n2los{nn0,nn1}.coeff(:,:),2));
+            sel   = meta.n2los{nn0,nn1}.sel;
             a0    = u.GetAtoms(inds0);
             a1    = u.GetAtoms(inds1);
             
@@ -127,12 +128,12 @@ for nn0=1:NN0
         end
         
         % N3LOS
-        if isfield(y,'n3los') && ~isempty(y.n3los{nn0,nn1}) && isfield(y.n3los{nn0,nn1},'coeff')
+        if isfield(meta,'n3los') && ~isempty(meta.n3los{nn0,nn1}) && isfield(meta.n3los{nn0,nn1},'coeff')
             
-            inds0 = y.n3los{nn0,nn1}.ind0;
-            inds1 = y.n3los{nn0,nn1}.ind1;
-            P     = 20*log10(rms(y.n3los{nn0,nn1}.coeff(:,:),2));
-            sel   = y.n3los{nn0,nn1}.sel;
+            inds0 = meta.n3los{nn0,nn1}.ind0;
+            inds1 = meta.n3los{nn0,nn1}.ind1;
+            P     = 20*log10(rms(meta.n3los{nn0,nn1}.coeff(:,:),2));
+            sel   = meta.n3los{nn0,nn1}.sel;
             a0    = u.GetAtoms(inds0);
             a1    = u.GetAtoms(inds1);
             
@@ -160,8 +161,8 @@ for nn0=1:NN0
         pov1 = y.pov1.xyz(nn1);
         
         % LOS
-        if isfield(y,'los') && ~isempty(y.los{nn0,nn1}) && isfield(y.los{nn0,nn1},'coeff')
-            P  = 20*log10(rms(y.los{nn0,nn1}.coeff(:)));
+        if isfield(meta,'los') && ~isempty(meta.los{nn0,nn1}) && isfield(meta.los{nn0,nn1},'coeff')
+            P  = 20*log10(rms(meta.los{nn0,nn1}.coeff(:)));
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
             if Pi>0
                 line(...
@@ -174,11 +175,11 @@ for nn0=1:NN0
         
         
         % NLOS
-        if isfield(y,'nlos') && ~isempty(y.nlos{nn0,nn1}) && isfield(y.nlos{nn0,nn1},'coeff')
+        if isfield(meta,'nlos') && ~isempty(meta.nlos{nn0,nn1}) && isfield(meta.nlos{nn0,nn1},'coeff')
             
-            inds0 = y.nlos{nn0,nn1}.ind;
-            P     = 20*log10(rms(y.nlos{nn0,nn1}.coeff(:,:),2));
-            sel   = y.nlos{nn0,nn1}.sel;
+            inds0 = meta.nlos{nn0,nn1}.ind;
+            P     = 20*log10(rms(meta.nlos{nn0,nn1}.coeff(:,:),2));
+            sel   = meta.nlos{nn0,nn1}.sel;
             a0    = u.GetAtoms(inds0);
             
             Pi = round((1+(P(:)'-Pmax)/sys.raySelThreshold)*length(cc));
@@ -204,12 +205,12 @@ for nn0=1:NN0
         end
         
         % N2LOS
-        if isfield(y,'n2los') && ~isempty(y.n2los{nn0,nn1}) && isfield(y.n2los{nn0,nn1},'coeff')
+        if isfield(meta,'n2los') && ~isempty(meta.n2los{nn0,nn1}) && isfield(meta.n2los{nn0,nn1},'coeff')
             
-            inds0 = y.n2los{nn0,nn1}.ind0;
-            inds1 = y.n2los{nn0,nn1}.ind1;
-            P     = 20*log10(rms(y.n2los{nn0,nn1}.coeff(:,:),2));
-            sel   = y.n2los{nn0,nn1}.sel;
+            inds0 = meta.n2los{nn0,nn1}.ind0;
+            inds1 = meta.n2los{nn0,nn1}.ind1;
+            P     = 20*log10(rms(meta.n2los{nn0,nn1}.coeff(:,:),2));
+            sel   = meta.n2los{nn0,nn1}.sel;
             a0    = u.GetAtoms(inds0);
             a1    = u.GetAtoms(inds1);
             
@@ -241,12 +242,12 @@ for nn0=1:NN0
         end
         
         % N3LOS
-        if isfield(y,'n3los') && ~isempty(y.n3los{nn0,nn1}) && isfield(y.n3los{nn0,nn1},'coeff')
+        if isfield(meta,'n3los') && ~isempty(meta.n3los{nn0,nn1}) && isfield(meta.n3los{nn0,nn1},'coeff')
             
-            inds0 = y.n3los{nn0,nn1}.ind0;
-            inds1 = y.n3los{nn0,nn1}.ind1;
-            P     = 20*log10(rms(y.n3los{nn0,nn1}.coeff(:,:),2));
-            sel   = y.n3los{nn0,nn1}.sel;
+            inds0 = meta.n3los{nn0,nn1}.ind0;
+            inds1 = meta.n3los{nn0,nn1}.ind1;
+            P     = 20*log10(rms(meta.n3los{nn0,nn1}.coeff(:,:),2));
+            sel   = meta.n3los{nn0,nn1}.sel;
             a0    = u.GetAtoms(inds0);
             a1    = u.GetAtoms(inds1);
             

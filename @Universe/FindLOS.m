@@ -109,7 +109,8 @@ for ii = sortS(r0<range)'
     points   = s(ii).points;
     surfaces = s(ii).surfaces;
     for ss = 1:length(surfaces)
-        p = VectorAdd(points(surfaces{ss}.pi,:),-POV);
+        surface = surfaces{ss};
+        p = VectorAdd(points(surface.pi,:),-POV);
         behind = BehindPolygon(p,losS(ptmask,:));
         ptmask(ptmask)=~behind;
     end
