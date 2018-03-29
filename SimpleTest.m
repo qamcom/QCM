@@ -153,7 +153,8 @@ pov  = [95,95,10]; n=n+1;
 x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovSW,[0 0 0],UEalgorithm,MShardware);
 
 pov  = [35,95,10]; n=n+1;
-x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovSE,[0 0 0],UEalgorithm,MShardware);
+speedX = 0;
+x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovSE,[speedX 0 0],UEalgorithm,MShardware);
 
 
 figure(3);
@@ -170,7 +171,8 @@ universe.DefStructure(bldIndex(2),1,[],[],1); % Enable with new res
 figure(5);
 universe.Plot(x0,x1);
 
-universe.DefStructure(bldIndex(2),[],[],[],[],[],pi/4); % Rotate 45'
+speedY = 30;
+universe.DefStructure(bldIndex(2),[],[],[],[],[],pi/4,[0,speedY,0]); % Rotate 45' and crank up speed!
 figure(6);
 universe.Plot(x0,x1);
 

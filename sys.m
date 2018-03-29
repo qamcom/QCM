@@ -27,7 +27,7 @@
 classdef sys
    properties (Constant)
       maxRadius             = 400; % Max raytracing range [m]
-      secondOrderRange      = 50;  % Don't look further than this to find 2nd bounce [m]
+      secondOrderRange      = 20;  % Don't look further than this to find 2nd bounce [m]
       largeScaleResolution  = 1;   % Grid spacing, for retracing rays (shading) [m] 
       c                     = 3e8; % Speed of light [m/s]
       kB                    = 1.38e-23; % J/K, Boltzmann

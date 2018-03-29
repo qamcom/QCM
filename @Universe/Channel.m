@@ -100,8 +100,8 @@ for pp0 = 1:pov0.antsys.n
                 polDiff  = AngleDiff(POL0,POL0);
                 
                 % Speed diff
-                speed0  = vdot(vel0, path01)./losRadius; % Speed of pov0 approaching pov1
-                speed1  = vdot(vel1,-path01)./losRadius; % Speed of pov1 approaching pov0
+                speed0  = dot(vel0, path01,2)./losRadius; % Speed of pov0 approaching pov1
+                speed1  = dot(vel1,-path01,2)./losRadius; % Speed of pov1 approaching pov0
                 speed01 = speed0+speed1; % Speed of POVs approaching each others
                 
                 [losCoeff,losMeta] = LosCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,losRadius,...
@@ -118,6 +118,8 @@ for pp0 = 1:pov0.antsys.n
         
         % Second order paths
         if numel(indLOS01) && sys.enableNLOS
+            
+            N01 = numel(indLOS01);
             
             % Secondary cluster locations vs POVs
             a = u.GetAtoms(indLOS01);
@@ -157,9 +159,12 @@ for pp0 = 1:pov0.antsys.n
             polAngle1 = AngleDiff(pathS1,POLS1);
             
             % Speed diff
-            speed0  = vdot(vel0,-path0)./radius0; % Speed of pov0 approaching a
-            speed1  = vdot(vel1,-path1)./radius1; % Speed of pov1 approaching a
-            speed01 = speed0+speed1; % Speed of POVs approaching each others (via a)
+            vela    = a.velocity; % Atom velocity vector
+            speeda0 = dot(vela, path0,2)./radius0; % Speed of a approaching pov0
+            speeda1 = dot(vela, path1,2)./radius1; % Speed of a approaching pov1
+            speed0  = dot(repmat(vel0,N01,1),-path0,2)./radius0; % Speed of pov0 approaching a
+            speed1  = dot(repmat(vel1,N01,1),-path1,2)./radius1; % Speed of pov1 approaching a
+            speed01 = speed0+speed1+speeda0+speeda1; % Speed of POVs approaching each others (via a)
             
             if exist('histStats','var') && histStats
                 figure(histStats); clf;
@@ -197,7 +202,7 @@ for pp0 = 1:pov0.antsys.n
             % Select closest secondary cluster locations vs _other_ POVs
             a0       = u.GetAtoms(indLOS00);
             a1       = u.GetAtoms(indLOS11);
-            path0    = VectorAdd(POV0,-a0.surface);
+            path0    = VectorAdd(POV0,-a0.surface);  % Path from a to POV
             path1    = VectorAdd(POV1,-a1.surface);
             %distance = norm(POV1-POV0);
             radius0  = vnorm(path0,2);
@@ -219,7 +224,7 @@ for pp0 = 1:pov0.antsys.n
                 % Get cross distances
                 vNLOS0   = repmat(permute(single(a0.surface),[1,3,2]),1,N1);
                 vNLOS1   = repmat(permute(single(a1.surface),[3,1,2]),N0,1);
-                path01x  = vNLOS1-vNLOS0;
+                path01x  = vNLOS1-vNLOS0; %  % Path from a0 to a1
                 radius01 = vnorm(path01x,3);
                 
                 % Path angle vs normal (0 = perpendicular towards surface. >pi/2 = from behind.
@@ -244,8 +249,16 @@ for pp0 = 1:pov0.antsys.n
                 [offAzimuth1, offElevation1] = AngleOffDOV(DOV1,NOV1,path1);
                 
                 % Speed diff
-                speed0  = vdot(vel0,-path0)./vnorm(path0,2); % Speed of pov0 approaching a0
-                speed1  = vdot(vel1,-path1)./vnorm(path1,2); % Speed of pov1 approaching a1
+                vela0    = a0.velocity; % Atom velocity vector
+                vela1    = a1.velocity; % Atom velocity vector
+                r0 = vnorm(path0,2);
+                r1 = vnorm(path1,2);
+                speeda01 = dot(repmat(permute(vela0,[1,3,2]) ,1,N1), path01x,3)./radius01; % Speed of a0 approaching a1
+                speeda10 = dot(repmat(permute(vela1,[3,1,2]) ,N0,1),-path01x,3)./radius01; % Speed of a1 approaching a0
+                speeda0  = dot(vela0, path0,2)./r0; % Speed of a0 approaching pov0
+                speeda1  = dot(vela1, path1,2)./r1; % Speed of a1 approaching pov1
+                speed0   = dot(repmat(vel0,N0,1),-path0)./r0; % Speed of pov0 approaching a0
+                speed1   = dot(repmat(vel1,N1,1),-path1)./r1; % Speed of pov1 approaching a1
                 
                 % See if any LOS btw 1st bounce from both ends (=> 2 bounce paths)
                 if sys.enableN2LOS
@@ -266,7 +279,7 @@ for pp0 = 1:pov0.antsys.n
                         inds0(ii)    = ind0;
                         inds1(ii)    = ind1;
                         path01(ii,:) = path01x(ind0,ind1,:);
-                        speed01(ii)  = speed0(ind0)+speed1(ind1); % Speed of POVs approaching each others (via a0 and a1)
+                        speed01(ii)  = speed0(ind0)+speed1(ind1)+speeda0(ind0)+speeda1(ind1)+speeda01(ind0,ind1)+speeda10(ind0,ind1); % Speed of POVs approaching each others (via a0 and a1)
                     end
                     
                     elevation01 = AngleDiff(a0.normal(inds0,:), path01);
@@ -344,7 +357,7 @@ for pp0 = 1:pov0.antsys.n
                         inds0(ii) = ind0;
                         inds1(ii) = ind1;
                         path01(ii,:) = path01x(ind0,ind1,:);
-                        speed01(ii)  = speed0(ind0)+speed1(ind1); % Speed of POVs approaching each others (via a0 and a1)
+                        speed01(ii)  = speed0(ind0)+speed1(ind1)+speeda0(ind0)+speeda1(ind1)+speeda01(ind0,ind1)+speeda10(ind0,ind1); % Speed of POVs approaching each others (via a0 and a1)
                     end
                     
                     [nxlosCoeff,nxlosMeta] = NXlosCoeff(freqs,times,array0,array1,dp0,dp1,rot0,rot1,speed01,...

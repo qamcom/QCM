@@ -18,7 +18,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function y=vdot(x0,x1,dim)
+function y=vdot(x0,x1)
 
 y = multiprod(x0,x1,[1,2],[2,3]);
 y = y(:,1);
