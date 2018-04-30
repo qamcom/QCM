@@ -35,23 +35,13 @@ p =[0     0   0; ...
     dx0,   0, 0];
  
 % Surfaces
-s{1}.pi = [1 2 3 4]; 
+s{1}.pi       = [1 2 3 4]; 
 s{1}.material = material;
+s{1}.people   = 1/10;     % People density (pp/m2]
+
 
 % Corners
 c = cell(0);
 s = Structure(p,s,c,[]);
 
-% dx = round(dx0/res);
-% dy = round(dy0/res);
-% [tmpx,tmpy] = meshgrid(1:dx,1:dy);
-% N = numel(tmpx);
-% 
-% y = Atoms;
-% y.normal   = [zeros(N,2) -ones(N,1)*res/2];
-% y.surface  = [tmpx(:)*res-res/2 tmpy(:)*res-res/2 zeros(N,1)]; % Put atom surface on top
-% y.corner   = zeros(N,2);
-% y.material = repmat(material,N,1);
-% y.res      = repmat(res,N,1);
-% 
-% 
+

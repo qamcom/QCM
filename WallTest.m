@@ -129,8 +129,8 @@ for ir = 1:numel(rr)
                         
             % Start a universe
             universe  = Universe('Test');
-            ground    = GroundStructure(WALLSIZE,WALLSIZE,resGround,matGround);
-            universe.AddAtoms('Ground',ground);
+            ground    = GroundStructure(WALLSIZE,WALLSIZE,matGround);
+            universe.AddStructure('Ground',ground,resGround);
             
             clear x0;
             clear x1;

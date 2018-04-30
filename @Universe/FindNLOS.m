@@ -1,6 +1,6 @@
 % Check if LOS btw Atom pairs. 
 %
-% LOS = CheckNLOS(u,POV0s,POV1s)
+% LOS = FindNLOS(u,POV0s,POV1s,range)
 % u is an handle to a Universe class (this class)
 % POV0s, POV1s: [x,y,z] Coordinates of point-of-view [m]
 % inds: Atom indece to exclude from search
@@ -26,7 +26,7 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function LOS = FindNLOS(u,POV0s,POV1s)
+function LOS = FindNLOS(u,POV0s,POV1s,range)
 
 
 N0  = size(POV0s,1);
@@ -36,13 +36,13 @@ LOS = zeros(N0,N1);
 if N1>N0
     all1 = 1:N1;
     for n0=1:N0
-        los0 = u.FindLOS(POV0s(n0,:),sys.secondOrderRange);
+        los0 = u.FindLOS(POV0s(n0,:),range);
         LOS(n0,intersect(all1,los0)) = 1;
     end
 else
     all0 = 1:N0;
     for n1=1:N1
-        los1 = u.FindLOS(POV1s(n1,:),sys.secondOrderRange);
+        los1 = u.FindLOS(POV1s(n1,:),range);
         LOS(intersect(all0,los1),n1) = 1;
     end
 end

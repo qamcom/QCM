@@ -44,8 +44,9 @@ Nx=4; Ny=4;
 bh_mean = 20; bh_std = 5;
 
 % Resolution
-resHouse  = 1;  % House tile size
+resHouse  = 2; % House tile size
 resGround = 2; % Ground tile size
+resTree   = 2; % Tree tile size
 
 % Materials
 matGround   = GenericMaterial('Street',0); % Ground cannot cast shade.
@@ -119,16 +120,14 @@ for ny=-(Ny-1)/2:(Ny-1)/2
 end
 
 %Add tree to universe
-% tt = TreeStructure([55 55 0],3,13,matTrunk,matFoliage);
-% universe.AddAtoms(sprintf('Tree%d',1),tt);
-% tt = TreeStructure([55 10 0],6,13,matTrunk,matFoliage);
-% universe.AddAtoms(sprintf('Tree%d',2),tt);
-% tt = TreeStructure([55 100 0],3,13,matTrunk,matFoliage);
-% universe.AddAtoms(sprintf('Tree%d',3),tt);
-% tt = TreeStructure([10 55 0],4,14,matTrunk,matFoliage);
-% universe.AddAtoms(sprintf('Tree%d',4),tt);
-% tt = TreeStructure([100 55 0],4,11,matTrunk,matFoliage);
-% universe.AddAtoms(sprintf('Tree%d',5),tt);
+structure = TreeStructure(3,13,matTrunk,matFoliage);
+n=1; treeIndex(n)=universe.AddStructure(sprintf('Tree%d',n),structure,resTree,[55 55 0]);
+structure = TreeStructure(4,13,matTrunk,matFoliage);
+n=2; treeIndex(n)=universe.AddStructure(sprintf('Tree%d',n),structure,resTree,[65 10 0]);
+structure = TreeStructure(3,13,matTrunk,matFoliage);
+n=3; treeIndex(n)=universe.AddStructure(sprintf('Tree%d',n),structure,resTree,[55 100 0]);
+structure = TreeStructure(4,14,matTrunk,matFoliage);
+n=4; treeIndex(n)=universe.AddStructure(sprintf('Tree%d',n),structure,resTree,[10 55 0]);
 
 x0=cell(0);
 x1=cell(0);
@@ -146,7 +145,7 @@ UEalgorithm = BasicUEAlgorithm;
 pov  = [35,15,10]; n=0;
 x0{1} = PointOfView(sprintf('BS%d',n),antSysBS,pov,0,dovNE,[0 0 0],BSalgorithm,BShardware);
 
-pov  = [95,15,10]; n=n+1;
+pov  = [85,25,10]; n=n+1;
 x1{n} = PointOfView(sprintf('MS%d',n),antSysMS,pov,0,dovNW,[0 0 0],UEalgorithm,MShardware);
 
 pov  = [95,95,10]; n=n+1;
@@ -161,6 +160,9 @@ figure(3);
 universe.Plot(x0,x1);
 pause(0.1)
 
+pause(0.1)
+figure(10);
+universe.PlotLOS(x0{1}.position,x1{1}.position);
 
 % DefStructure(u,index,enabled,tag,structure,res,pos,rot,velocity)
 universe.DefStructure(bldIndex(2),0); % Disable
@@ -176,9 +178,7 @@ universe.DefStructure(bldIndex(2),[],[],[],[],[],pi/4,[0,speedY,0]); % Rotate 45
 figure(6);
 universe.Plot(x0,x1);
 
-pause(0.1)
-figure(10);
-universe.PlotLOS(x0{1}.position,x1{1}.position);
+
 
 rain  = 0; % mm/h
 
@@ -206,8 +206,8 @@ SE0_bps2Hz  = log2(1+snr0)
 
 %channelResponse = universe.Channels(x0,x1,freqs,times,rain);
 
-%figure(20);
-%universe.Response(x0,x1,freqs,rain);
+figure(20);
+universe.Response(x0,x1,freqs,rain);
 for ii=1:n
     figure(10+ii); 
     universe.Trace(x0{1},x1{ii},freqs,rain); 

@@ -40,11 +40,15 @@ xT = x*Tp;
 z0  = mean(pT(:,3));     % Plane altitude
 k   = z0./xT(:,3);       % Relative distance from origo to planepoly vs x
 ind = find(k>0&k<1);     % Range criteria
-xcT = k(ind).*xT(ind,:); % Intersect points
 
-% 2D intersect
-behind      = zeros(size(x,1),1)==1;
-behind(ind) = inpolygon(xcT(:,1),xcT(:,2), pT(:,1), pT(:,2));
+behind = logical(zeros(size(x,1),1));
+
+if numel(ind)
+    xcT = k(ind).*xT(ind,:); % Intersect points
+    
+    % 2D intersect
+    behind(ind) = inpolygon(xcT(:,1),xcT(:,2), pT(:,1), pT(:,2));
+end
 
 if sys.debugTracer
 fprintf('behind=%d\n',sum(behind))

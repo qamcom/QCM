@@ -73,7 +73,7 @@ else
     % Expand time samples. Small scale temporal extrapolation
     % x(ray,freq) => x(ray,freq,time)
     A = repmat(x,[1,1,Nt]);
-    F = repmat(doppler,1,Nf)+repmat(freqs,Nr,1);
+    F = repmat(doppler,1,Nf);
     P = multiprod(F,1j*times*2*pi,[2,3],[1,2]);
     x = permute(A.*exp(P),[1,2,4,5,3]);
     

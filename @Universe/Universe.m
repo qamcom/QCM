@@ -83,6 +83,37 @@ classdef Universe < handle
             u.ResetLOS;
 
         end
+        
+        % Get pseudo random user positions
+        % Placed on surfaces with people density indication
+        function pov = People(u,seed)
+            ph_mean = 1.5; % People height average
+            ph_std  = 0.2; % People height std dev
+            ph_min  = 1;   % Minimum height
+            ph_max  = 2;   % Maximom
+            rr = rng;
+            st = GetStructures(u);
+            pov = [];
+            for sti = 1:length(st)
+                points   = st(sti).points;
+                surfaces = st(sti).surfaces;
+                for sui = 1:length(surfaces)
+                    surface = surfaces{sui};
+                    if isfield(surface,'people')
+                        rng(seed);
+                        pp    = points(surface.pi,:);
+                        pp2m2 = surface.people;
+                        box = [max(pp);min(pp)]; % Box enclosing polygon
+                        dbox = abs(diff(box)); % box size
+                        np  = round(prod(dbox(1:2))*pp2m2); % Nrof pp in box
+                        pov2D = [min(pp(:,1))+dbox(1)*rand(np,1),min(pp(:,2))+dbox(2)*rand(np,1)];
+                        pov2D = pov2D(inpolygon(pov2D(:,1),pov2D(:,2),pp(:,1),pp(:,2)),:);
+                        pov   = [pov;[pov2D,mean(box(:,3))+min(ph_max,max(ph_min,ph_mean+ph_std*randn(size(pov2D,1),1)))]];
+                    end
+                end
+            end
+            rng(rr);
+        end
                         
         % Re/Define Structure in universe
         DefStructure(u,index,valid,tag,structure,res,pos,rot,velocity);
@@ -110,13 +141,18 @@ classdef Universe < handle
         % Get all structures in universe (global pos)
         function y = GetStructures(u)
             valid = find([u.objects.enabled]);
-            for k=1:numel(valid)
-                o = valid(k);
-                obj = u.objects(o);
-                structure = obj.structure;
-                structure.points = RotateVectorZ(structure.points ,obj.rot)+obj.pos;
-                structure.p0     = structure.p0+obj.pos;
-                y(k)=structure;
+            N = numel(valid);
+            if N>0
+                for k=1:numel(valid)
+                    o = valid(k);
+                    obj = u.objects(o);
+                    structure = obj.structure;
+                    structure.points = RotateVectorZ(structure.points ,obj.rot)+obj.pos;
+                    structure.p0     = structure.p0+obj.pos;
+                    y(k)=structure;
+                end
+            else
+                y=[];
             end
         end
         

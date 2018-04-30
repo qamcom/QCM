@@ -29,9 +29,10 @@
 
 function [indLOS,indNLOS] = FindLOS(u,POV,range)
 
-
+% Discrete position
 POV=round(POV/sys.largeScaleResolution)*sys.largeScaleResolution;
 
+% Check LOS cache
 ind = [];
 if ~isempty(u.los) && u.los.N>0
     ind = FindPt(u.los.pov,POV);
@@ -39,34 +40,16 @@ else
     u.los.N = 0;
 end
 
-
+% If not in cache
 if isempty(ind)
     
-    % All atoms
+    % All Atoms & Structures
     a = u.GetAtoms;
     s = u.GetStructures;
     
-    if isempty(a.res)
-        indLOS = [];
-    else
-        % Atoms vs LOS point (Put POV in origo)
-        losS = VectorAdd(a.surface,-POV);
-        
-        % Max range
-        indRange = find(vnorm(losS,2)<range);
-        
-        if ~isempty(indRange)
-            
-            % Atoms in range
-            a = u.GetAtoms(indRange);
-            ptmask = FindCore(a,s,POV,range);
-            indLOS = indRange(ptmask==1);
-            indLOS = indLOS(:);
-            
-        else
-            indLOS = [];
-        end
-    end
+    % Trace core
+    ptmask = FindCore(a.surface,POV,s,range);
+    indLOS = find(ptmask);
     
     % Store in cache
     ind = u.los.N+1;
@@ -82,39 +65,3 @@ end
 
 indNLOS = setdiff(1:u.nrofAtoms,indLOS);
 
-
-end
-
-function ptmask = FindCore(a,s,POV,range)
-
-
-% Atoms vs LOS point (Put POV in origo)
-losS = VectorAdd(a.surface,-POV);
-
-N = size(a.surface,1);
-
-% Pruning atoms with surface points in shade
-ptmask = ones(N,1)==1;
-
-
-% Sort shading structures, so closest comes first
-% Tese are most likely to cast shade onm any others
-% Quickly reducing remaining atoms to trace during first iterations
-p0   = VectorAdd(reshape([s.p0],3,[])',-POV);
-r0 = vnorm(p0,2);
-[~,sortS] = sort(r0);
-
-
-for ii = sortS(r0<range)'
-    points   = s(ii).points;
-    surfaces = s(ii).surfaces;
-    for ss = 1:length(surfaces)
-        surface = surfaces{ss};
-        p = VectorAdd(points(surface.pi,:),-POV);
-        behind = BehindPolygon(p,losS(ptmask,:));
-        ptmask(ptmask)=~behind;
-    end
-end
-
-
-end

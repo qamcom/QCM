@@ -28,22 +28,21 @@ function Plot(a,forceColor)
 
 hold on;
 
-EdgeAlpha = 0.99;
+EdgeAlpha = 0.6;
 FaceAlpha = 0.6;
 
-% Plot Surfaces
+% Plot 2D atoms (surfaces)
 if sys.plotSurfacePatches
     [x,y,z,c] = a.SurfacePatches;
     if nargin==2, c = forceColor; end
-    patch(x,y,z,c,'FaceAlpha',FaceAlpha,'EdgeAlpha',EdgeAlpha);
-    %patch(x,y,z,c,'FaceAlpha',FaceAlpha,'EdgeColor','none');
+    patch(x,y,z,c,'FaceAlpha',FaceAlpha,'EdgeColor','none');
 end
 
-% Plot Corners
+% Plot 1D atoms (corners)
 if sys.plotCornerPatches
     [x,y,z,c] = a.CornerPatches;
     if nargin==2, c = forceColor; end
-    patch(x,y,z,c,'FaceAlpha',FaceAlpha,'EdgeAlpha',EdgeAlpha);
+    patch(x,y,z,c,'FaceAlpha',FaceAlpha,'EdgeColor','none');
 end
 [x,y,z] = a.CornerLines;
 if nargin==1
@@ -53,31 +52,24 @@ else
 end
 line(x,y,z,'Color',c,'LineWidth',2);
 
+% Plot Atom orientations
 if sys.plotAtomNormals
-    ind = find(vnorm(a.normal,2)&(a.corner(:,1)==0));
+    ind = find(vnorm(a.normal,2));
     ss0 = a.surface(ind,:);
     ssn = a.surface(ind,:)+a.normal(ind,:);
 
     line([ss0(:,1),ssn(:,1)]',[ss0(:,2),ssn(:,2)]',[ss0(:,3),ssn(:,3)]','Color','k');
     plot3(ss0(:,1)',ss0(:,2)',ss0(:,3)','k.');
-    %plot3(ssn(:,1)',ssn(:,2)',ssn(:,3)','g*');
-    
-    ind = find(vnorm(a.normal,2)&(a.corner(:,1)~=0));
-    ss0 = a.surface(ind,:);
-    ssn = a.surface(ind,:)+a.normal(ind,:);
-
-    line([ss0(:,1),ssn(:,1)]',[ss0(:,2),ssn(:,2)]',[ss0(:,3),ssn(:,3)]','Color','k');
-    plot3(ss0(:,1)',ss0(:,2)',ss0(:,3)','k.');
-    %plot3(ssn(:,1)',ssn(:,2)',ssn(:,3)','r*');
-
- end
-
-% Plot Spheres (no surface, no corner)
-if sys.plotShadingSpheres
-    ind = find([a.material.shading]'&(a.corner(:,1)==0));
-else
-    ind = find(~vnorm(a.normal,2));
 end
+
+% Plot 0D objects (no surface, no corner)
+ind = find(vnorm(a.normal,2)==0);
+posx = a.surface(ind,1);
+posy = a.surface(ind,2);
+posz = a.surface(ind,3);
+plot3(posx,posy,posz,'k.');
+
+
 N = numel(ind);
 M = 16;
 [xx,yy,zz]=sphere(M-1);
@@ -88,13 +80,17 @@ res  = a.res(ind)/2;
 if nargin>1&&ischar(forceColor), forceColor=color2rgb(forceColor); end
 for ii=1:N
     if nargin==1
-        surf(xx*res(ii)+posx(ii),yy*res(ii)+posy(ii),zz*res(ii)+posz(ii),repmat(permute(color2rgb('g'),[1,3,2]),M,M),'FaceAlpha',FaceAlpha,'EdgeAlpha',EdgeAlpha);
-        %surf(xx*res(ii)+posx(ii),yy*res(ii)+posy(ii),zz*res(ii)+posz(ii),repmat(permute(color2rgb('g'),[1,3,2]),M,M),'FaceAlpha',FaceAlpha,'EdgeColor','none');
+        rgb = color2rgb('g');
     else
-        surf(xx*res(ii)+posx(ii),yy*res(ii)+posy(ii),zz*res(ii)+posz(ii),repmat(permute(forceColor,[1,3,2]),M,M),'FaceAlpha',FaceAlpha,'EdgeAlpha',EdgeAlpha);
-        %surf(xx*res(ii)+posx(ii),yy*res(ii)+posy(ii),zz*res(ii)+posz(ii),repmat(permute(color2rgb(forceColor),[1,3,2]),M,M),'FaceAlpha',FaceAlpha,'EdgeColor','none');
-    end 
+        rgb = forceColor;
+    end
+    surf(xx*res(ii)+posx(ii),yy*res(ii)+posy(ii),zz*res(ii)+posz(ii),repmat(permute(rgb,[1,3,2]),M,M),'FaceAlpha',FaceAlpha,'EdgeColor','none');
 end
+
+
+
+
+
 
 
 

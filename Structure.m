@@ -26,7 +26,6 @@ classdef Structure
         surfaces;
         corners;
         clouds;
-        velocity;
         p0;
     end
     
@@ -60,13 +59,29 @@ classdef Structure
                 for n=1:N
                     cn = s.corners{n};
                     xyz = s.points(cn.pi,:);
-                    rgb = cm(sn.material.color,:);
+                    rgb = cm(cn.material.color,:);
                     line('XData',xyz(:,1),'YData',xyz(:,2),'ZData',xyz(:,3),'Color',rgb,'LineWidth',2);
                 end
             end
             
             % Clouds
+            N=numel(s.clouds);
+            if N
+                M = 16;
+                [xx,yy,zz]=sphere(M-1);
+            end
+            for n=1:N
+                cn  = s.clouds{n};
+                xyz = s.points(cn.pi,:);
+                rgb = cm(cn.material.color,:);
+                rad = cn.radius;
+                for ii=1:size(xyz,1)
+                    surf(xx*rad+xyz(ii,1),yy*rad+xyz(ii,2),zz*rad+xyz(ii,3),repmat(permute(rgb,[1,3,2]),M,M),'FaceAlpha',0.5,'EdgeColor','none');
+                end
+            end
+            
         end
         
     end
+    
 end

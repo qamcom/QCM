@@ -1,10 +1,9 @@
-% Check if LOS btw POV pairs. Returns a soft value if partly shaded
+% Check if LOS btw POV pairs. 
 %
-% LOS = CheckLOS(u,POV0s,POV1s)
+% LOS = CheckLOS(u,POV0s,POV1s,range)
 % u is an handle to a Universe class (this class)
 % POV0s, POV1s: [x,y,z] Coordinates of point-of-view [m]
-% inds: Atom indece to exclude from search
-% LOS:      Matrix with scalar amplitude values (1=no shading, 0=no LOS at all)
+% LOS:       (1=no shading, 0=no LOS )
 %
 %
 % -------------------------------------------------------------------------
@@ -26,58 +25,19 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function LOS = CheckLOS(u,POV0s,POV1s,inds0,inds1)
+function LOS = CheckLOS(u,POV0s,POV1s,range)
 
+s = u.GetStructures;
 
 N0  = size(POV0s,1);
 N1  = size(POV1s,1);
-
-
-
-% All atoms
 LOS = ones(N0,N1);
-a=u.GetAtoms;
 
-if ~isempty(a.normal)
-    
-    % Keep atoms casting shade only
-    ind = find([a.material.shading]' & ~a.corner(:,1));
-    a=u.GetAtoms(ind);
-    
-    % Walk thru all comb's
-    
-    for n0=1:N0
-        POV0=POV0s(n0,:);
-        
-        for n1=1:N1
-            POV1=POV1s(n1,:);
-            
-            C=1;
-            % Atoms in LOS box (ie in box with POV in opposite corners)
-            LOSbox = ...
-                a.surface(:,1)+a.res*C >= min(POV0(1),POV1(1)) & ...
-                a.surface(:,1)-a.res*C <= max(POV0(1),POV1(1)) & ...
-                a.surface(:,2)+a.res*C >= min(POV0(2),POV1(2)) & ...
-                a.surface(:,2)-a.res*C <= max(POV0(2),POV1(2)) & ...
-                a.surface(:,3)+a.res*C >= min(POV0(3),POV1(3)) & ...
-                a.surface(:,3)-a.res*C <= max(POV0(3),POV1(3));
-            
-            % Remove endpoint atoms
-            if exist('inds0','var'), LOSbox(inds0(n0))=0; end
-            if exist('inds1','var'), LOSbox(inds1(n1))=0; end
-            
-            % See if any obstructions in LOS box
-            if sum(LOSbox)
-                center  = a.surface(LOSbox,:)-a.normal(LOSbox,:);
-                res     = a.res(LOSbox,:);
-                [dd,xx] = DistanceToLine(center,POV0,POV1);
-                d = min(dd(xx>sys.largeScaleResolution/2)./res(xx>sys.largeScaleResolution/2))*2;
-                
-                LOS(n0,n1)=(isempty(d)||(d>=1));
-            end
-            
-        end
+for n0=1:N0    
+    for n1=1:N1       
+        LOS(n0,n1) = FindCore(POV0s(n0,:),POV1s(n1,:),s,range);
     end
 end
+
 
 

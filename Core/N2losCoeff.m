@@ -18,7 +18,12 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [y,meta] = N2losCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,speed,materials0,materials1,corners0,corners1,radius0,radius1,radius01,elevation0,elevation1,azimuth0,azimuth1,elevation01,elevation10,azimuth01,azimuth10,offAzimuth0,offElevation0,offAzimuth1,offElevation1,pol0,pol1,res0,res1,los01,rain,raySelThreshold,bb)
+function [y,meta] = N2losCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,...
+    rotation1,speed,materials0,materials1,corners0,corners1,radius0,radius1,...
+    radius01,elevation0,elevation1,azimuth0,azimuth1,elevation01,elevation10,...
+    azimuth01,azimuth10,offAzimuth0,offElevation0,offAzimuth1,offElevation1,...
+    pol0,pol1,res0,res1,los01,rain,raySelThreshold,bb)
+
 Nf = numel(freqs);
 Nr = numel(elevation1);
 
@@ -43,7 +48,7 @@ c00 = squeeze(rms(tmp,2));
 
 % More polarisation modes?
 
-if dp0,
+if dp0
     
     % Second polarisation mode (add 90 degress to pov0 polarisation)
     retransCoeff0p  = RetransCoeff(freqs,materials0,corners0,elevation0,elevation01,azimuth0,azimuth01,pol0+pi/4,pi/4,radius0,radius01,res0);
@@ -56,7 +61,7 @@ if dp0,
         radius1,offElevation1,offAzimuth1,array1,rotation1);
 end
 
-if dp1,
+if dp1
     
     % Third polarisation mode (add 90 degress to pov1 polarisation)
     retransCoeff1p  = RetransCoeff(freqs,materials1,corners1,elevation1,elevation10,azimuth1,azimuth10,pol1+pi/4,pi/4,radius0,radius01,res1);
@@ -69,7 +74,7 @@ if dp1,
         radius1,offElevation1,offAzimuth1,array1,rotation1);
 end
 
-if dp0 && dp1,
+if dp0 && dp1
     
     % Forth polarisation mode (add 90 degress to both pov0 and pov1 polarisations)
     tmp = tmp0.*retransCoeff0p.*retransCoeff1p;

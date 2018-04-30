@@ -18,7 +18,10 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function [y,meta]=LosCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,speed,radius,offAzimuth0,offElevation0,offAzimuth1,offElevation1,polDiff,LOS,rain,raySelThreshold,bb)
+function [y,meta]=LosCoeff(freqs,times,array0,array1,dp0,dp1,rotation0,rotation1,...
+    speed,radius,offAzimuth0,offElevation0,offAzimuth1,offElevation1,...
+    polDiff,LOS,rain,raySelThreshold,bb)
+
 
 % Phase center los coeff 
 elemCoeff0      = array0.element.ElementCoeff(freqs,offAzimuth0,offElevation0);
@@ -26,8 +29,8 @@ elemCoeff1      = array1.element.ElementCoeff(freqs,offAzimuth1,offElevation1);
 distanceCoeff   = DistanceCoeff(freqs,radius);
 atmosphereCoeff = AtmosphereCoeff(freqs,radius,rain);
 
-tmp = elemCoeff0.*elemCoeff1.*distanceCoeff.*atmosphereCoeff*LOS;
-  
+tmp = bb.*elemCoeff0.*elemCoeff1.*distanceCoeff.*atmosphereCoeff*LOS;
+ 
 % First orthogonal polarisation mode
 tmp0   = tmp.*cos(polDiff);
 

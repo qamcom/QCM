@@ -123,20 +123,26 @@ for ir = 1:numel(rr)
             
             % Start a universe
             universe  = Universe('Test');
-            ground    = GroundStructure(WALLSIZE,WALLSIZE,resGround,matGround);
-            universe.AddAtoms('Screen',ground);
             
-            cc = Atoms;
-            nh = 1;%floor(WALLSIZE/resGround/2)*2+1;
-            yy = WALLSIZE/2;%resGround/2+(0:(nh-1))*(WALLSIZE-resGround)/(nh-1);
+            % Defining points
+            p =[       0,        0,  0; ...
+                       0, WALLSIZE,  0; ...
+                WALLSIZE, WALLSIZE,  0;...
+                WALLSIZE,        0,  0];
             
-            cc.surface = [ zeros(nh,1),       yy(:), zeros(nh,1)];
-            cc.normal  = [ -ones(nh,1), zeros(nh,1), zeros(nh,1)];
-            cc.res     = resGround*ones(nh,1);
-            cc.corner  = repmat([pi,pi/2],nh,1);
-            cc.material= repmat(matGround,nh,1);
-            universe.AddAtoms('Edge',cc);
+            % Surfaces
+            s{1}.pi = [1 2 3 4];
+            s{1}.material = matGround;
             
+            % Corners
+            c{1}.pi = [1 2];
+            c{1}.si = [1 1];
+            c{1}.material = matGround;
+            wall = Structure(p,s,c,[]);
+            
+            
+            universe.AddStructure('Screen',wall,resGround);
+                        
             
             
             a1 = 0;

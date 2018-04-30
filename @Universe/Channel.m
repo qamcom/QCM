@@ -45,11 +45,6 @@ nlosMetas  = cell(pov0.antsys.n,pov1.antsys.n);
 n2losMetas = cell(pov0.antsys.n,pov1.antsys.n);
 nxlosMetas = cell(pov0.antsys.n,pov1.antsys.n);
 
-% Ray Power, Speed and Distance
-P = [];
-S = [];
-D = [];
-
 for pp0 = 1:pov0.antsys.n
     
     [POV0,DOV0,NOV0,pol0,rot0,array0,vel0] = pov0.xyz(pp0);
@@ -81,7 +76,7 @@ for pp0 = 1:pov0.antsys.n
             if sys.forceLOS
                 LOS = 1;
             else
-                LOS = u.CheckLOS(POV0,POV1);
+                LOS = u.CheckLOS(POV0,POV1,sys.maxRadius);
             end
             
             % First order path
@@ -97,7 +92,7 @@ for pp0 = 1:pov0.antsys.n
                 
                 % Polarisation diff
                 % 0 and pi = perfect polarisation match. pi/2 => no match
-                polDiff  = AngleDiff(POL0,POL0);
+                polDiff  = AngleDiff(POL0,POL1);
                 
                 % Speed diff
                 speed0  = dot(vel0, path01,2)./losRadius; % Speed of pov0 approaching pov1
@@ -226,7 +221,7 @@ for pp0 = 1:pov0.antsys.n
                 vNLOS1   = repmat(permute(single(a1.surface),[3,1,2]),N0,1);
                 path01x  = vNLOS1-vNLOS0; %  % Path from a0 to a1
                 radius01 = vnorm(path01x,3);
-                
+                                
                 % Path angle vs normal (0 = perpendicular towards surface. >pi/2 = from behind.
                 elevation0 = AngleDiff(a0.normal,path0);
                 elevation1 = AngleDiff(a1.normal,path1);
@@ -257,12 +252,12 @@ for pp0 = 1:pov0.antsys.n
                 speeda10 = dot(repmat(permute(vela1,[3,1,2]) ,N0,1),-path01x,3)./radius01; % Speed of a1 approaching a0
                 speeda0  = dot(vela0, path0,2)./r0; % Speed of a0 approaching pov0
                 speeda1  = dot(vela1, path1,2)./r1; % Speed of a1 approaching pov1
-                speed0   = dot(repmat(vel0,N0,1),-path0)./r0; % Speed of pov0 approaching a0
-                speed1   = dot(repmat(vel1,N1,1),-path1)./r1; % Speed of pov1 approaching a1
+                speed0   = dot(repmat(vel0,N0,1),-path0,2)./r0; % Speed of pov0 approaching a0
+                speed1   = dot(repmat(vel1,N1,1),-path1,2)./r1; % Speed of pov1 approaching a1
                 
                 % See if any LOS btw 1st bounce from both ends (=> 2 bounce paths)
                 if sys.enableN2LOS
-                    LOS = u.FindNLOS(a0.surface,a1.surface);
+                    LOS = u.FindNLOS(a0.surface,a1.surface,sys.secondOrderRange);
                 else
                     LOS = zeros(numel(sel0),numel(sel1));
                 end
@@ -378,34 +373,60 @@ for pp0 = 1:pov0.antsys.n
             end
         end
         
-        Meta.los{pp0,pp1}   = losMeta;
-        Meta.nlos{pp0,pp1}  = nlosMeta;
-        Meta.n2los{pp0,pp1} = n2losMeta;
-        Meta.nxlos{pp0,pp1} = nxlosMeta;
         
-        
+        P = [];
+        A = [];
+        S = [];
+        D = [];
         if losMeta.P>-1000
+            A=[A;[losMeta.ant0AoA,losMeta.ant0EoA,losMeta.ant1AoA,losMeta.ant1EoA]];
             D=[D;losMeta.radius];
             S=[S;losMeta.speed];
             P=[P;rms(losMeta.coeff).^2]; 
         end        
         if nlosMeta.P>-1000
+            A=[A;[nlosMeta.ant0AoA,nlosMeta.ant0EoA,nlosMeta.ant1AoA,nlosMeta.ant1EoA]];
             D=[D;nlosMeta.radius];
             S=[S;nlosMeta.speed];
             P=[P;rms(nlosMeta.coeff(:,:),2).^2];
         end
         if n2losMeta.P>-1000
+            A=[A;[n2losMeta.ant0AoA,n2losMeta.ant0EoA,n2losMeta.ant1AoA,n2losMeta.ant1EoA]];
             D=[D;n2losMeta.radius];
             S=[S;n2losMeta.speed];
             P=[P;rms(n2losMeta.coeff(:,:),2).^2];
         end
         if nxlosMeta.P>-1000
+            A=[A;[nxlosMeta.ant0AoA,nxlosMeta.ant0EoA,nxlosMeta.ant1AoA,nxlosMeta.ant1EoA]];
             D=[D;nxlosMeta.radius];
             S=[S;nxlosMeta.speed];
             P=[P;rms(nxlosMeta.coeff(:,:),2).^2];
         end
         
+        % Ray Angule Spread [degrees]. [AoA(pov0), EoA(pov0), AoA(pov1), EoA(pov1)]
+        rmsA       = angle(sum(repmat(sqrt(P),1,4).*exp(1j*A/180*pi),1))/pi*180;
+        diffA      = angle(exp(1j*(A-repmat(rmsA,size(A,1),1))/180*pi))/pi*180;
+        Meta{pp0,pp1}.Angle.rms       = rmsA;
+        Meta{pp0,pp1}.Angle.rmsSpread = sqrt(sum(repmat(P,1,4).*(diffA).^2,1)/sum(P)); 
         
+        % Ray Delay & Spread [sec]
+        % https://en.wikipedia.org/wiki/Delay_spread
+        rmsD                          = sum(P.*D)/sum(P);
+        Meta{pp0,pp1}.Delay.rms       = rmsD/sys.c;
+        Meta{pp0,pp1}.Delay.rmsSpread = sqrt(sum(P.*(D-rmsD).^2)/sum(P))/sys.c;
+        
+        % Ray Rel Doppler & Spread [Hz/Hz]
+        % In analogy with Delay spread
+        rmsS                            = sum(P.*S)/sum(P);
+        Meta{pp0,pp1}.Doppler.rms       = rmsS/sys.c;
+        Meta{pp0,pp1}.Doppler.rmsSpread = sqrt(sum(P.*(S-rmsS).^2)/sum(P))/sys.c;
+        
+        % More...
+        Meta{pp0,pp1}.los   = losMeta;
+        Meta{pp0,pp1}.nlos  = nlosMeta;
+        Meta{pp0,pp1}.n2los = n2losMeta;
+        Meta{pp0,pp1}.nxlos = nxlosMeta;
+
         tmpHf = losCoeff+nlosCoeff+n2losCoeff+nxlosCoeff;
         
         % Cat POV1
@@ -427,11 +448,6 @@ for pp0 = 1:pov0.antsys.n
 end
 
 cc = numel(Hf);
-
-Meta.rmsD       = sum(P.*D)/sum(P);
-Meta.rmsDspread = sqrt(sum(P.*(D-Meta.rmsD).^2)/sum(P));
-Meta.rmsS       = sum(P.*S)/sum(P);
-Meta.rmsSspread = sqrt(sum(P.*(S-Meta.rmsS).^2)/sum(P));
 
 y.tag       = sprintf('%s-%s',pov0.tag,pov1.tag);
 y.pov0      = pov0;

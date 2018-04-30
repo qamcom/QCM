@@ -1,4 +1,4 @@
-% Generate a number of triviual trees as an Atoms class isntance
+% Generate a number of trivial trees as an Structure class instance
 % y = TreeStructure(p,r,h,matTrunk,matFoliage)
 % p   tree positions
 % r   tree radii
@@ -23,25 +23,45 @@
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-function y = TreeStructure(p,r,h,matTrunk,matFoliage)
+function y = TreeStructure(r,h,matTrunk,matFoliage)
 
-N=numel(r); % Nrof trees
-y = Atoms;  % Init 'Atoms' class instance
 
-% Trunks
-y.surface  = p+[zeros(N,2) (h-r)/2]; % Trunk center (trunk height = h-r)
-y.corner   = repmat([pi,0],N,1);     % Special case, Corner w/o surface
-y.res      = h-r;                    % Trunk length
-y.normal   = repmat([1,0,0],N,1);    % Normal irrelevant
-y.material = repmat(matTrunk,N,1);
+% Defining points
+p  =[0 0 0; 0 0 h-r];
+ 
+% Surfaces. None
+s = cell(0);    
+c = cell(0);    
 
-% Crowns
-y.surface  = [y.surface;  p+[zeros(N,2) h-r]]; % Crown center (trunk height = h-r)
-y.corner   = [y.corner;   repmat([0,0],N,1)];  % Special case, Not a surface at all
-y.res      = [y.res;      r*2];                  % Crown radius
-y.normal   = [y.normal;   zeros(N,3)];         % Normal does not exist
-y.material = [y.material; repmat(matFoliage,N,1)];
+% Corners. Trunk.
+c{1}.pi       = [1 2];
+c{1}.si       = [];
+c{1}.material = matTrunk;
 
+% Clouds. Crown
+x{1}.pi       = 2;
+x{1}.radius   = r;
+x{1}.density  = 0.5;
+x{1}.material = matFoliage;
+
+y = Structure(p,s,c,x);
+
+% y = Atoms;  % Init 'Atoms' class instance
+% 
+% % Trunks
+% y.surface  = p+[zeros(N,2) (h-r)/2]; % Trunk center (trunk height = h-r)
+% y.corner   = repmat([pi,0],N,1);     % Special case, Corner w/o surface
+% y.res      = h-r;                    % Trunk length
+% y.normal   = repmat([1,0,0],N,1);    % Normal irrelevant
+% y.material = repmat(matTrunk,N,1);
+% 
+% % Crowns
+% y.surface  = [y.surface;  p+[zeros(N,2) h-r]]; % Crown center (trunk height = h-r)
+% y.corner   = [y.corner;   repmat([0,0],N,1)];  % Special case, Not a surface at all
+% y.res      = [y.res;      r*2];                  % Crown radius
+% y.normal   = [y.normal;   zeros(N,3)];         % Normal does not exist
+% y.material = [y.material; repmat(matFoliage,N,1)];
+% 
 
 
 

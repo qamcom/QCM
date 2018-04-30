@@ -78,13 +78,13 @@ end
 % Plot endpoints
 if nargin>1
     for ii=1:numel(x0)
-        x0{ii}.plot;
+        x0{ii}.plot('k.');
     end
 end
 
 if nargin>2
     for ii=1:numel(x1)
-        x1{ii}.plot;
+        x1{ii}.plot('r.');
     end
 end
 

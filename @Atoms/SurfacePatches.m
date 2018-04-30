@@ -26,7 +26,7 @@
 
 function [x,y,z,c] = SurfacePatches(a)
 
-ind = find(~a.corner(:,1)&vnorm(a.normal,2));
+ind = find(~a.corner(:,1)&vnorm(a.normal,2)>0);
 N = numel(ind);
 
 if N

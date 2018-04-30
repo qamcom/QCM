@@ -124,7 +124,7 @@ classdef GenericMaterial < Material
             % pLoss:    Penetration loss [dB]
             % sLoss:    Scattering loss floor [dB]
             % rLoss:    Reflection loss min [dB]
-            if numel(m.freqs)<=1,
+            if numel(m.freqs)<=1
                 fbin = ones(size(freqs));
             else
                 [~,fbin]=min(abs(repmat(m.freqs(:),1,numel(freqs))-repmat(freqs,numel(m.freqs,1))));
@@ -138,15 +138,18 @@ classdef GenericMaterial < Material
             
             % Penetration (only with paths on different sides of atom surface)
             penetrationRequired = xor(e0>pi/2,e1>pi/2);
-            penetrationCoeff    = 10.^(repmat(penetrationRequired,1,Nf).*repmat(-pLoss/20,Nr,1));
+            %penetrationCoeff    = 10.^(repmat(penetrationRequired,1,Nf).*repmat(-pLoss/20,Nr,1));
             
+            penetrationCoeff = ones(Nr,Nf);
             if sys.forceNoPenetration
                 penetrationCoeff(penetrationRequired,:)=0;
+            else
+                Np = sum(penetrationRequired);
+                penetrationCoeff(penetrationRequired,:)=penetrationCoeff(penetrationRequired,:).*repmat(-pLoss/20,Np,1);
             end
             
             % Polarisation must align with reflection plane for perfect reflection.
-            polLoss = 30;
-            polarisationCoeff   = (10.^(-polLoss/20))+repmat(sin(p0).*sin(p1),1,Nf);
+            polarisationCoeff   = repmat(sin(p0).*sin(p1),1,Nf);
             
             % Reflection adjusted for diff from perfect reflection.
             % Scattering becomes dominant when reflection is weak.
@@ -192,7 +195,7 @@ classdef GenericMaterial < Material
             geometryCoeff = resPn*10^(Offset/20);
             
             % Scattering independent of polarisation?
-            y = penetrationCoeff.*(reflectionCoeff.*polarisationCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff);
+            y = penetrationCoeff.*(reflectionCoeff+repmat(geometryCoeff,1,Nf).*scatteringCoeff).*polarisationCoeff;
             
         end
         

@@ -26,29 +26,29 @@
 
 classdef sys
    properties (Constant)
-      maxRadius             = 400; % Max raytracing range [m]
-      secondOrderRange      = 20;  % Don't look further than this to find 2nd bounce [m]
+      maxRadius             = 400; % Max raytracing range [m] for LOS and NLOS
+      secondOrderRange      = 200;  % Don't look further than this for N2LOS and NXLOS
       largeScaleResolution  = 1;   % Grid spacing, for retracing rays (shading) [m] 
       c                     = 3e8; % Speed of light [m/s]
       kB                    = 1.38e-23; % J/K, Boltzmann
       T                     = 290; % [K] System temp => Move to POV class
       raySelThreshold       = 50;  % Discard rays weaker than this value vs strongest ray [dB] 
-      enableDopplerSpread   = 0;   % 1 => Model doppler of each ray. 0 => don't
+      enableDopplerSpread   = 0;   % 1 => Model doppler shift of each ray. 0 => don't
       enableLOS             = 1;   % Trace first order path (LOS) if enabled (=1)
       forceLOS              = 0;   % Ensure LOS channel. Disregard any shading for LOS path. Overrides "enableLOS"
       enableNLOS            = 1;   % Trace 2nd order paths if enabled (=1)
-      enableN2LOS           = 0;   % Trace 3rd order paths if enabled (=1)
-      enableN3LOS           = 0;   % Trace 4th order paths if enabled (=1)
-      enableNXLOS           = 0;   % Use stochastic model for >3rd (and 2nd if disabled) order paths if enabled (=1). 
+      enableN2LOS           = 1;   % Trace 3rd order paths if enabled (=1)
+      %enableN3LOS           = 0;   % Trace 4th order paths if enabled (=1)
+      enableNXLOS           = 0;   % Use stochastic model for higher order paths if enabled (=1). 
       forceNoScattering     = 0;
       forceNoDiffraction    = 0;
       forceNoReflection     = 0;
-      forceNoPenetration    = 1;
+      forceNoPenetration    = 0;
       plotAtoms             = 0;
       plotCornerPatches     = 0;
-      plotAtomNormals       = 0;
+      plotAtomNormals       = 1;
       plotSurfacePatches    = 1;
-      plotShadingSpheres    = 0;
+      plotPOVmeta           = 0;
       debugTracer           = 0;
    end
 end

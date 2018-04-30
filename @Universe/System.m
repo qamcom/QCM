@@ -9,7 +9,7 @@
 % -------------------------------------------------------------------------
 %     This is a part of the Qamcom Channel Model (QCM)
 %     Copyright (C) 2017  Björn Sihlbom, QAMCOM Research & Technology AB
-%     mailto:bjorn.sihlbom@qamcom.se, http://www.qamcom.se, https://github.com/qamcom/QCM
+%     mailto:bjocdrn.sihlbom@qamcom.se, http://www.qamcom.se, https://github.com/qamcom/QCM
 %
 %     This program is free software: you can redistribute it and/or modify
 %     it under the terms of the GNU General Public License as published by
@@ -47,11 +47,8 @@ for txi = 1:Ntx
             pn   = pn0*10^(NFr/20); % Receiver noise power [Watt]
             link = u.Channel(RX,TX,freqs,times,rain);
             H    = link.Hf;
-            
-            meta.rmsDelay(txi,rxi)=link.meta.rmsD/sys.c; 
-            meta.rmsDelaySpread(txi,rxi)=link.meta.rmsDspread/sys.c; 
-            meta.rmsRelDoppler(txi,rxi)=link.meta.rmsS/sys.c; 
-            meta.rmsRelDopplerSpread(txi,rxi)=link.meta.rmsSspread/sys.c; 
+            meta(txi,rxi)=link;
+
 
             
             % Concat for MU case below
@@ -75,22 +72,22 @@ for txi = 1:Ntx
     % Multiuser case
     
     % Actual SINR
-    Pmu  = TX.algorithm.DesignPrecoder(Hmu,Pt,NFr,BW);
+    Pmu  = TX.algorithm.DesignPrecoder(Hmu,Pt,NFr,BW);              % Multi user precoder
     HPmu = TX.algorithm.Precode(Hmu,Pmu);
     for rxi = 1:Nrx
         if A(txi,rxi)
             RX    = RXpov{rxi};
-            NFr   = RX.hardware.nf;
-            HPsu  = HPmu(SUind{rxi},SUind{rxi},:,:);                % Useful channel
-            IPsc  = HPmu(SUind{rxi},setdiff(1:end,SUind{rxi}),:,:); % Channel for Inter MS (Intra Cell) interference channel
-            Esu   = RX.algorithm.DesignEqualizer(HPsu,NFr,BW);
-            EHPsu = RX.algorithm.Equalize(HPsu,Esu);
-            Ns    = size(EHPsu,1);
-            for stream = 1:Ns
-                S  = mean(abs(EHPsu(stream,stream,:).^2));
-                Iu = mean(sum(abs(EHPsu(stream,setdiff(1:Ns,stream),:)).*2,2));
-                Ic = mean(sum(abs(IPsc(stream,:,:)).^2,2));
-                N  = pn/pt;
+            NFr   = RX.hardware.nf;                                 % Receiver noise figure
+            HPsu  = HPmu(SUind{rxi},SUind{rxi},:,:);                % Useful precoded channel (BS-MS)
+            IPsc  = HPmu(SUind{rxi},setdiff(1:end,SUind{rxi}),:,:); % Leakage from other MS. I.e Channel for Inter MS (Intra Cell) interference channel
+            Esu   = RX.algorithm.DesignEqualizer(HPsu,NFr,BW);      % Equalizer at MS
+            EHPsu = RX.algorithm.Equalize(HPsu,Esu);                % Effective channel Precoder-Channel-Equalizer
+            Ns    = size(EHPsu,1);                                 
+            for stream = 1:Ns                                       % Loop over all layers of MS [rxi]
+                S  = mean(abs(EHPsu(stream,stream,:).^2));          % Strength of this layer
+                Iu = mean(sum(abs(EHPsu(stream,setdiff(1:Ns,stream),:)).*2,2)); % Strength of leakage from other MS
+                Ic = mean(sum(abs(IPsc(stream,:,:)).^2,2));         % Strength of leakage from other layers, of this MS
+                N  = pn/pt;                                         % Strength of Noise
                 sinr(txi,SUind{rxi})=S/(Iu+Ic+N); % PC&EQ Link signal vs Self inteference and Noise floor
             end
         end

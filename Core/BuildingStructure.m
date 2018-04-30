@@ -26,8 +26,11 @@
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
-function s = BuildingStructure(corners,bh,matWall,matRoof)
+function structure = BuildingStructure(corners,bh,matWall,matRoof)
 
+matFloor = matWall;
+
+fHmin = 4; % Floor spacing [m]
 N = size(corners,1);
 p = [[corners zeros(N,1)];[corners bh+zeros(N,1)]]; % Defining points
 for n=1:N
@@ -41,9 +44,19 @@ for n=1:N
     c{N+n}.material = matRoof; %  Wall2Roof 2 corner 
 end
 s{N+1}.pi = N+(1:N); % Roof surface polygon point index
-s{N+1}.material = matRoof; % Roof surface polygon point index
-s = Structure(p,s,c,[]);
+s{N+1}.material = matRoof; % Roof surface material
 
+% Floors
+F = floor((bh-fHmin)/fHmin); % Nrof floors
+fH = bh/(F+1);               % Floor spacing
+for f = 1:F
+    p = [p ;[corners f*fH*ones(N,1)]];
+    s{N+f+1}.pi = (N+f*N)+(1:N);  % Floor surface polygon point index
+    s{N+f+1}.material = matFloor; % Floor surface material
+    s{N+f+1}.people   = 1/10;     % People density  [pp/m2]
+end
+
+structure = Structure(p,s,c,[]);
 
 % y = Atoms;
 % 
